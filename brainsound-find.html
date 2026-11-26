@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>브레인 사운드 – 공인 훈련사·교육장 찾기</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+  :root { --bg:#04050d; --muted:#9aa4c2; --line:#1e2848; --main:#3b4fe0; --glow:#8f9bff; --ok:#4ade80; --warn:#ff8a57; --gold:#ffd86b; --cyan:#5ee7ff; --bad:#ff6b6b; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:radial-gradient(1100px 460px at 50% -10%,#1a2470 0,#04050d 62%) no-repeat, var(--bg); color:#fff; font-family:"Pretendard Variable","Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif; word-break:keep-all; min-height:100vh; }
+  button,input,select { font:inherit; color:inherit; }
+  button { cursor:pointer; }
+  .wrap { max-width:980px; margin:0 auto; padding:24px 20px 70px; }
+  .logo { font-weight:900; letter-spacing:.16em; font-size:14px; background:linear-gradient(90deg,#fff,var(--glow)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  h1 { font-size:clamp(26px,5vw,38px); margin:8px 0 6px; } h2 { font-size:19px; margin:0 0 4px; } h3 { font-size:15px; margin:0 0 8px; }
+  .sub { color:var(--muted); font-size:14.5px; line-height:1.7; margin:0 0 18px; }
+  .hint { font-size:13px; color:var(--muted); line-height:1.65; }
+  .warnbox { background:rgba(255,138,87,.1); border:1px solid rgba(255,138,87,.4); border-radius:12px; padding:11px 15px; font-size:13.5px; color:#ffd2bd; margin-bottom:16px; line-height:1.65; }
+  .steps { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:6px 0 18px; }
+  @media (max-width:760px) { .steps { grid-template-columns:1fr 1fr; } }
+  .st { text-align:left; padding:13px 14px; border-radius:14px; border:1px solid rgba(143,155,255,.2); background:rgba(255,255,255,.03); }
+  .st:hover { border-color:var(--glow); }
+  .st.on { border-color:var(--cyan); background:rgba(94,231,255,.08); box-shadow:0 0 0 1px var(--cyan) inset; }
+  .st i { font-style:normal; display:inline-flex; width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,#4a5cff,#8f6bff); align-items:center; justify-content:center; font-size:12.5px; font-weight:800; margin-right:8px; }
+  .st b { font-size:14.5px; } .st span { display:block; font-size:12px; color:var(--muted); margin-top:4px; }
+  .card { background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015)); border:1px solid rgba(143,155,255,.2); border-radius:20px; padding:22px; margin-bottom:16px; }
+  .form { display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; }
+  @media (max-width:700px) { .form { grid-template-columns:1fr; } }
+  .full { grid-column:1/-1; }
+  label.f { display:grid; gap:6px; font-size:13.5px; font-weight:700; }
+  label.f small { font-weight:400; color:var(--muted); font-size:12px; }
+  input[type=text],input[type=email],input[type=number],select { padding:12px 14px; border-radius:12px; border:1px solid #2a3558; background:#070a1c; width:100%; font-size:15px; }
+  input:focus,select:focus { outline:2px solid var(--cyan); outline-offset:0; border-color:transparent; }
+  .chk { display:flex; gap:10px; align-items:flex-start; font-size:13.5px; line-height:1.6; color:#cfd6f5; } .chk input { margin-top:4px; width:17px; height:17px; flex:none; }
+  .btn { border:1px solid #2a3558; background:rgba(255,255,255,.05); padding:11px 22px; border-radius:999px; font-size:14.5px; font-weight:700; }
+  .btn:hover { border-color:var(--glow); }
+  .btn.pri { background:linear-gradient(135deg,#4a5cff,#3b4fe0 60%,#6a3bff); border:0; box-shadow:0 8px 26px rgba(74,92,255,.5); }
+  .btn.sm { padding:6px 13px; font-size:12.5px; }
+  .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .msg { font-size:13.5px; line-height:1.6; } .msg.bad { color:var(--bad); } .msg.ok { color:var(--ok); }
+  .codebox { margin-top:14px; padding:16px 18px; border-radius:14px; background:rgba(94,231,255,.08); border:1px dashed var(--cyan); }
+  .codebox .code { font-size:30px; font-weight:900; letter-spacing:.14em; color:var(--cyan); font-variant-numeric:tabular-nums; }
+  table { width:100%; border-collapse:collapse; font-size:14px; } td,th { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:middle; } th { color:var(--muted); font-weight:600; font-size:12.5px; }
+  .tag { display:inline-block; font-size:12px; padding:3px 10px; border-radius:999px; border:1px solid #2a3556; color:var(--muted); }
+  .tag.ok { color:#c8f7d9; border-color:rgba(74,222,128,.5); } .tag.wait { color:#ffd2bd; border-color:rgba(255,138,87,.5); }
+  .mono { font-family:Consolas,monospace; letter-spacing:.08em; color:var(--cyan); font-weight:700; }
+  .empty { color:var(--muted); font-size:14px; padding:18px 6px; text-align:center; }
+  footer { margin-top:30px; font-size:12.5px; color:#6b7599; line-height:1.8; }
+  .wrap { max-width:1100px; }
+  .tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; } .tabs .btn.on { border-color:var(--cyan); background:rgba(94,231,255,.1); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
+  .stats button { text-align:left; padding:14px 16px; border-radius:14px; border:1px solid rgba(143,155,255,.2); background:rgba(255,255,255,.03); }
+  .stats span { display:block; font-size:12.5px; color:var(--muted); } .stats b { font-size:26px; }
+  .link { background:none; border:0; padding:0; text-decoration:underline; text-underline-offset:3px; color:var(--cyan); font-size:inherit; }
+  .scroll { overflow-x:auto; } td { white-space:nowrap; }
+  .search { padding:10px 14px; border-radius:12px; border:1px solid #2a3558; background:#070a1c; min-width:220px; }
+  .btn.on { border-color:var(--cyan); background:rgba(94,231,255,.14); }
+  #map { height:460px; border-radius:20px; border:1px solid rgba(143,155,255,.25); background:#0b1020; margin-bottom:16px; z-index:0; }
+  .pin { background:linear-gradient(135deg,#4a5cff,#8f6bff); color:#fff; border:2px solid #fff; border-radius:999px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:800; font-size:11px; line-height:1.2; box-shadow:0 4px 14px rgba(0,0,0,.45); }
+  .pin.on { background:linear-gradient(135deg,#ffb020,#ff7a3d); }
+  .regions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px; }
+  .pc { border:1px solid rgba(143,155,255,.22); border-radius:18px; overflow:hidden; background:rgba(255,255,255,.03); }
+  .pc .ph { height:180px; background:#0d1330; display:flex; align-items:center; justify-content:center; font-size:46px; } .pc .ph img { width:100%; height:100%; object-fit:cover; }
+  .pc .bd { padding:15px 16px; } .pc h3 { margin:8px 0 4px; font-size:17px; } .pc p { margin:6px 0 0; font-size:13.5px; line-height:1.6; color:#cfd6f5; overflow-wrap:anywhere; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="logo" href="landing.html" aria-label="브레인 사운드 첫 화면" style="text-decoration:none">BRAIN SOUND</a>
+  <h1>공인 훈련사 · 교육장 찾기</h1>
+  <p class="sub">본사가 승인한 훈련사와 교육장(훈련장)이에요. 지도에서 지역을 누르거나 아래에서 골라 보세요.</p>
+  <div class="row" style="margin-bottom:14px"><button class="btn on" data-kind="all">전체</button><button class="btn" data-kind="trainer">공인 훈련사</button><button class="btn" data-kind="center">교육장</button><span style="flex:1"></span><input class="search" id="q" placeholder="시·군·구, 이름 검색" aria-label="검색"></div>
+  <div id="map" role="region" aria-label="지역별 지도"></div>
+  <div class="regions" id="regions"></div>
+  <div class="row" style="margin-bottom:12px"><h2 id="title" style="margin:0">전국</h2><span class="msg" id="msg"></span></div>
+  <div class="cards" id="list"></div>
+  <div class="card" style="margin-top:26px"><h3>함께하고 싶다면 본사에 신청하세요</h3><p class="hint" style="margin:0 0 14px">신청하면 본사가 확인한 뒤 승인합니다. 승인된 뒤 프로필 공개를 켜면 이 페이지에 나와요.</p><div class="row"><a class="btn pri" href="brainsound-trainer.html" style="text-decoration:none">트레이너 신청</a><a class="btn" href="brainsound-center.html" style="text-decoration:none">훈련장 신청</a></div></div>
+  <footer>브레인 사운드 · 집중 훈련과 체험을 위한 서비스이며 의료기기가 아닙니다. 지도의 표시는 시·도 대표 위치이며 정확한 주소 위치가 아닙니다.</footer>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+// 서버(Supabase). 공개용 키만 사용하고, 테이블에는 직접 접근하지 않고 bs_ 함수만 호출한다.
+const BS_URL = 'https://brfeszcyjsaprbakqsjl.supabase.co', BS_KEY = 'sb_publishable_0Nsga8WVTqBcBS6kcUytrg_UB-1FtnK';
+async function bsRpc(fn, args) { const r = await fetch(BS_URL + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: BS_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}), signal: AbortSignal.timeout(10000) }); if (!r.ok) throw new Error('server ' + r.status); return r.json(); }
+const bsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// 시·도 대표 위치
+const SIDO = { '서울': [37.566, 126.978], '인천': [37.456, 126.55], '경기': [37.27, 127.25], '강원': [37.75, 128.2], '충북': [36.8, 127.75], '충남': [36.55, 126.8], '세종': [36.56, 127.26], '대전': [36.33, 127.43], '전북': [35.72, 127.13], '광주': [35.16, 126.85], '전남': [34.75, 126.95], '경북': [36.35, 128.75], '대구': [35.87, 128.6], '경남': [35.35, 128.2], '울산': [35.54, 129.31], '부산': [35.15, 129.06], '제주': [33.38, 126.55] };
+let D = null, kind = 'all', area = null, map = null, layer = null; const photos = {};
+const items = () => !D ? [] : [...(kind !== 'center' ? D.trainers.map(x => ({ ...x, k: 'trainer' })) : []), ...(kind !== 'trainer' ? D.centers.map(x => ({ ...x, k: 'center' })) : [])];
+const matches = x => { const q = $('q').value.trim().toLowerCase(); return !q || [x.name, x.sido, x.gu, x.address, x.center].some(v => v && v.toLowerCase().includes(q)); };
+function pick(s) { area = area === s ? null : s; render(); }
+function render() {
+  const base = items().filter(matches), n = s => base.filter(x => x.sido === s).length;
+  $('regions').innerHTML = `<button class="btn sm${area ? '' : ' on'}" data-area="">전국 ${base.length}</button>` + Object.keys(SIDO).map(s => `<button class="btn sm${area === s ? ' on' : ''}" data-area="${s}"${n(s) || area === s ? '' : ' style="opacity:.5"'}>${s} ${n(s)}</button>`).join('');
+  if (layer) { layer.clearLayers(); for (const [s, at] of Object.entries(SIDO)) { const c = n(s); if (!c && area !== s) continue; const size = c ? 46 : 38;
+    L.marker(at, { icon: L.divIcon({ className: '', html: `<div class="pin${area === s ? ' on' : ''}" style="width:${size}px;height:${size}px">${s}<span>${c}</span></div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] }), title: `${s} ${c}곳`, keyboard: true }).on('click', () => pick(s)).addTo(layer); } }
+  const list = base.filter(x => !area || x.sido === area);
+  $('title').textContent = `${area || '전국'} · ${list.length}곳`;
+  $('list').innerHTML = list.map(x => `<article class="pc"><div class="ph" data-photo="${x.has_photo ? x.k + ':' + esc(x.id) : ''}">${x.k === 'trainer' ? '🧑‍🏫' : '🏫'}</div><div class="bd"><span class="tag ok">${x.k === 'trainer' ? '공인 훈련사' : '교육장'}</span><h3>${esc(x.name)}</h3><span class="hint">${esc(x.sido)} ${esc(x.gu)}${x.center ? ' · ' + esc(x.center) : ''}</span>`
+    + (x.k === 'trainer' && x.count !== null ? `<p>훈련생 <b style="color:var(--gold);font-size:18px">${x.count}</b>명</p>` : '') + (x.k === 'center' ? `<p>소속 훈련사 <b style="color:var(--gold);font-size:18px">${x.trainers}</b>명</p>` : '')
+    + (x.address ? `<p>📍 ${esc(x.address)}</p>` : '') + (x.intro ? `<p>${esc(x.intro)}</p>` : '') + (x.contact ? `<p>☎ ${esc(x.contact)}</p>` : '') + '</div></article>').join('')
+    || `<div class="empty" style="grid-column:1/-1">${!D ? '' : '아직 이 조건에 맞는 곳이 없어요.'}</div>`;
+  document.querySelectorAll('[data-photo]').forEach(async box => { const key = box.dataset.photo; if (!key) return; const [k, id] = key.split(':');
+    try { photos[key] = photos[key] || bsRpc('bs_public_photo', { p_kind: k, p_id: id }); const src = await photos[key]; if (src && src.startsWith('data:image/jpeg;base64,')) { const im = new Image(); im.alt = '등록 사진'; im.src = src; box.replaceChildren(im); } } catch { delete photos[key]; } });
+}
+document.querySelectorAll('[data-kind]').forEach(b => b.onclick = () => { kind = b.dataset.kind; document.querySelectorAll('[data-kind]').forEach(x => x.classList.toggle('on', x === b)); render(); });
+$('regions').onclick = e => { const b = e.target.closest('[data-area]'); if (!b) return; area = b.dataset.area || null; if (map) area ? map.setView(SIDO[area], 9) : map.fitBounds(Object.values(SIDO)); render(); };
+$('q').oninput = render;
+if (window.L) { map = L.map('map', { scrollWheelZoom: false }).fitBounds(Object.values(SIDO)); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '&copy; OpenStreetMap contributors' }).addTo(map); layer = L.layerGroup().addTo(map); }
+else $('map').innerHTML = '<div class="empty" style="padding-top:200px">지도를 불러오지 못했어요. 아래 지역 버튼으로 골라 주세요.</div>';
+async function load() { $('msg').textContent = '불러오는 중…'; try { D = await bsRpc('bs_find'); $('msg').textContent = ''; } catch { $('msg').textContent = '목록을 불러오지 못했어요. 인터넷을 확인해 주세요.'; $('msg').className = 'msg bad'; } render(); }
+render(); load();
+</script>
+</body>
+</html>

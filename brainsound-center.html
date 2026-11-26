@@ -99,6 +99,17 @@
     <div class="card" id="wait" hidden></div>
     <div id="work" hidden>
       <div class="stats" id="stats"></div>
+      <form class="card" id="profile"><h3>훈련장 사진과 공개 프로필</h3>
+        <div class="row" style="align-items:flex-start;gap:18px;margin-bottom:16px">
+          <div id="phBox" style="width:150px;height:150px;border-radius:16px;border:1px dashed #2a3558;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none"><span class="hint" id="phNone">사진 없음</span><img id="phImg" alt="등록한 사진" hidden style="width:100%;height:100%;object-fit:cover"></div>
+          <div><div class="row"><label class="btn sm pri" style="cursor:pointer">사진 올리기<input type="file" id="phFile" accept="image/*" style="position:absolute;opacity:0;width:1px;height:1px"></label><button type="button" class="btn sm" id="phDel">사진 지우기</button></div>
+            <p class="hint" style="margin:10px 0 0">시설 사진을 올려 주세요. <b>아이들 얼굴이 나온 사진은 올리지 마세요.</b> 사진은 자동으로 작게 줄여서 저장해요.</p><span class="msg" id="phMsg"></span></div>
+        </div>
+        <div class="form"><label class="f full">소개<input type="text" id="pfIntro" maxlength="200"></label>
+          <label class="f full">공개 연락처 (비워 두면 표시하지 않아요)<input type="text" id="pfContact" maxlength="60" placeholder="예: 010-0000-0000 또는 이메일"></label><label class="f full">공개 주소<input type="text" id="pfAddr" maxlength="100"></label>
+          <div class="full"><label class="chk"><input type="checkbox" id="pfPublic"><span><b>찾기 페이지에 공개</b>해요. 이름·지역·사진·소개와 위에 적은 공개 연락처가 누구에게나 보여요.</span></label></div></div>
+        <div class="row" style="margin-top:16px"><button class="btn pri" id="pfSave">프로필 저장</button><a class="btn" href="brainsound-find.html" style="text-decoration:none">찾기 페이지 보기</a><span class="msg" id="pfMsg"></span></div>
+      </form>
       <div class="card"><h3>소속 트레이너</h3><p class="hint" style="margin:0 0 10px">트레이너가 <b>트레이너 신청</b>에서 우리 훈련장을 고르면 여기에 보여요. 승인은 본사에서 합니다.</p><div class="scroll" id="trainers"></div></div>
       <div class="card"><h3>반</h3><div class="scroll" id="classes"></div></div>
       <div class="card"><div class="row" style="justify-content:space-between"><h3 id="stTitle">아이들</h3><button class="btn sm" id="all" hidden>전체 보기</button></div><div class="scroll" id="students"></div></div>
@@ -147,7 +158,7 @@ function render() {
 async function load() { const r = await bsRpc('bs_center_overview', me); if (!r.ok) return r; D = r; if (shown && !D.students.some(s => s.id === shown)) { shown = null; $('detail').hidden = true; } render(); return r; }
 async function act(fn, args, done) { say('msg', '처리 중…'); try { const r = await bsRpc(fn, { ...me, ...args }); if (!r.ok) return say('msg', r.msg, 'bad'); await load(); say('msg', done, 'ok'); } catch { say('msg', NET, 'bad'); } }
 $('login').onsubmit = e => { e.preventDefault(); const m = $('lgMail').value.trim(), p = $('lgPw').value; if (!m || !p) return say('lgMsg', '이메일과 비밀번호를 입력해 주세요.', 'bad');
-  send('lgGo', 'lgMsg', async () => { me = { p_email: m, p_pass: p }; const r = await load(); if (!r.ok) { me = null; return say('lgMsg', r.msg, 'bad'); } $('front').hidden = true; $('main').hidden = false; $('lgPw').value = ''; say('lgMsg', ''); }); };
+  send('lgGo', 'lgMsg', async () => { me = { p_email: m, p_pass: p }; const r = await load(); if (!r.ok) { me = null; return say('lgMsg', r.msg, 'bad'); } $('front').hidden = true; $('main').hidden = false; $('lgPw').value = ''; say('lgMsg', ''); loadProfile(); }); };
 async function records(id) { const s = D.students.find(x => x.id === id), box = $('detail'); shown = id; box.hidden = false; box.innerHTML = '<div class="empty">불러오는 중…</div>';
   try { const r = await bsRpc('bs_center_student', { ...me, p_id: id }); if (!r.ok) throw 0; if (shown !== id) return;
     const table = (h, rows) => rows.length ? '<div class="scroll"><table><tr>' + h.map(x => `<th>${x}</th>`).join('') + '</tr>' + rows.map(v => '<tr>' + v.map(c => `<td>${c}</td>`).join('') + '</tr>').join('') + '</table></div>' : '<div class="empty">기록이 없어요.</div>';
@@ -162,8 +173,21 @@ $('pwOpen').onclick = () => { $('pwForm').hidden = false; $('pwOld').focus(); };
 $('pwForm').onsubmit = e => { e.preventDefault(); const o = $('pwOld').value, n = $('pwNew').value;
   if (!o) return say('pwMsg', '지금 비밀번호를 입력해 주세요.', 'bad'); if (n.length < 8) return say('pwMsg', '새 비밀번호는 8자 이상으로 해 주세요.', 'bad'); if (n !== $('pwNew2').value) return say('pwMsg', '새 비밀번호 두 칸이 서로 달라요.', 'bad');
   send('pwSave', 'pwMsg', async () => { const r = await bsRpc('bs_center_change_password', { p_email: me.p_email, p_old: o, p_new: n }); if (!r.ok) return say('pwMsg', r.msg, 'bad'); me.p_pass = n; pwClose(); say('msg', '비밀번호를 변경했어요 ✔', 'ok'); }); };
+// ---------- 사진과 공개 프로필 ----------
+const NET5 = '처리하지 못했어요. 인터넷 연결과 5번(공개 프로필) SQL 실행 여부를 확인해 주세요.';
+function showPhoto(src) { $('phImg').hidden = !src; $('phNone').hidden = !!src; if (src) $('phImg').src = src; else $('phImg').removeAttribute('src'); }
+async function loadProfile() { try { const r = await bsRpc('bs_center_profile', me); if (!r.ok) return say('pfMsg', r.msg, 'bad'); showPhoto(r.photo); $('pfIntro').value = r.intro; $('pfContact').value = r.contact; $('pfPublic').checked = r.is_public; $('pfAddr').value = r.address; } catch { say('pfMsg', NET5, 'bad'); } }
+// 사진을 긴 쪽 480px 이하의 JPEG로 줄인다
+function shrink(file) { return new Promise((ok, no) => { const url = URL.createObjectURL(file), im = new Image(); im.onerror = () => { URL.revokeObjectURL(url); no(); };
+  im.onload = () => { URL.revokeObjectURL(url); for (let size = 480, q = .82; size >= 200; size -= 70, q -= .08) { const k = Math.min(1, size / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k)); const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height); const out = c.toDataURL('image/jpeg', q); if (out.length <= 190000) return ok(out); } no(); };
+  im.src = url; }); }
+async function savePhoto(data, done) { say('phMsg', '저장 중…'); try { const r = await bsRpc('bs_center_set_photo', { ...me, p_photo: data }); if (!r.ok) return say('phMsg', r.msg, 'bad'); showPhoto(data); say('phMsg', done, 'ok'); } catch { say('phMsg', NET5, 'bad'); } }
+$('phFile').onchange = async () => { const f = $('phFile').files[0]; $('phFile').value = ''; if (!f) return; let data; try { data = await shrink(f); } catch { return say('phMsg', '이 사진은 읽을 수 없어요. JPG나 PNG 사진을 골라 주세요.', 'bad'); } await savePhoto(data, '사진을 저장했어요 ✔'); };
+$('phDel').onclick = () => savePhoto(null, '사진을 지웠어요.');
+$('profile').onsubmit = e => { e.preventDefault(); send('pfSave', 'pfMsg', async () => { const r = await bsRpc('bs_center_set_profile', { ...me, p_intro: $('pfIntro').value, p_contact: $('pfContact').value, p_address: $('pfAddr').value, p_public: $('pfPublic').checked }); if (!r.ok) return say('pfMsg', r.msg, 'bad'); say('pfMsg', '저장했어요 ✔', 'ok'); }); };
+const clearProfile = () => { $('profile').reset(); showPhoto(null); say('pfMsg', ''); say('phMsg', ''); };
 $('re').onclick = () => act('bs_center_overview', {}, '새로 불러왔어요.');
-$('out').onclick = () => { pwClose(); me = D = only = shown = null; $('main').hidden = true; $('front').hidden = false; $('detail').hidden = true; ['trainers', 'classes', 'students', 'detail', 'stats', 'who'].forEach(i => $(i).innerHTML = ''); say('msg', ''); };
+$('out').onclick = () => { clearProfile(); pwClose(); me = D = only = shown = null; $('main').hidden = true; $('front').hidden = false; $('detail').hidden = true; ['trainers', 'classes', 'students', 'detail', 'stats', 'who'].forEach(i => $(i).innerHTML = ''); say('msg', ''); };
 </script>
 </body>
 </html>
