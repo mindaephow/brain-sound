@@ -93,7 +93,7 @@ const bsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch {
 const $ = id => document.getElementById(id);
 const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const say = (id, t, k) => { const e = $(id); e.textContent = t; e.className = 'msg ' + (k || ''); };
-const GN = { balloon: '풍선 띄우기', car: '자동차 경주', puzzle: '퍼즐 맞추기', dragon: '별빛 편대', candle: '촛불 끄기', flower: '꽃 피우기', axe: '도끼 던지기', archery: '양궁', balance: '좌우 균형', tug: '뇌파 줄다리기' };
+const GN = { balloon: '방울 개구리', car: '자동차 경주', puzzle: '퍼즐 맞추기', dragon: '별빛 편대', candle: '촛불 끄기', flower: '꽃 피우기', axe: '도끼 던지기', archery: '양궁', balance: '좌우 균형', tug: '뇌파 줄다리기' };
 const KINDS = { centers: ['훈련장', 'center'], trainers: ['트레이너', 'trainer'], teachers: ['교사', 'teacher'], students: ['학생 회원', 'student'], classes: ['반', 'class'], schools: ['학교', 'school'] };
 const when = t => t ? new Date(t).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
 let pw = '', D = null, tab = 'centers', only = null, shown = null;   // 비밀번호는 저장하지 않음. only: { key, id, label }

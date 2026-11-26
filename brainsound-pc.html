@@ -786,9 +786,12 @@ function skStep(g, dt, el, I, W) {
   g.scroll += dt * (g.rapid ? 46 : 22);
   g.pts = Math.max(0, Math.min(100, g.unit * 100 / SK_GOAL - g.hit * 3)); }
 // 데모 모드(기기 없음)에서만: 방향키 ← →, 또는 게임 화면의 왼쪽·오른쪽 클릭/터치로 이동. 실제 기기에서는 윙크로만 움직임.
-function skMove(d) { if (!adminTest() || source !== 'demo' || !tr || tr.id !== 'dragon' || tr.phase !== 'play') return false; const n = Math.max(0, Math.min(4, tr.g.lane + d)); if (n !== tr.g.lane) { tr.g.lane = n; sfx([[d < 0 ? 330 : 392, .04]], .03); } return true; }
-addEventListener('keydown', e => { if ((e.code === 'ArrowLeft' || e.code === 'ArrowRight') && skMove(e.code === 'ArrowLeft' ? -1 : 1)) e.preventDefault(); });
-document.getElementById('trCv').addEventListener('pointerdown', e => { const r = e.currentTarget.getBoundingClientRect(); skMove(e.clientX - r.left < r.width / 2 ? -1 : 1); });
+const testPlay = id => adminTest() && source === 'demo' && tr && tr.id === id && tr.phase === 'play';
+function skMove(d) { if (!testPlay('dragon')) return false; const n = Math.max(0, Math.min(4, tr.g.lane + d)); if (n !== tr.g.lane) { tr.g.lane = n; sfx([[d < 0 ? 330 : 392, .04]], .03); } return true; }
+function bbMove(d) { if (!testPlay('balloon')) return false; const n = Math.max(0, Math.min(2, tr.g.fl + d)); if (n !== tr.g.fl) { tr.g.fl = n; sfx([[d < 0 ? 523 : 294, .04]], .03); } return true; }
+addEventListener('keydown', e => { const lr = { ArrowLeft: -1, ArrowRight: 1 }[e.code], ud = { ArrowUp: -1, ArrowDown: 1 }[e.code];
+  if ((lr && skMove(lr)) || ((ud || lr) && bbMove(ud || -lr))) e.preventDefault(); });
+document.getElementById('trCv').addEventListener('pointerdown', e => { const r = e.currentTarget.getBoundingClientRect(); skMove(e.clientX - r.left < r.width / 2 ? -1 : 1); bbMove(e.clientY - r.top < r.height / 2 ? -1 : 1); });
 const SK_GOAL = 78;   // 이만큼 격추하면 100점 (임시 값, 실기기 시험 후 조정)
 function skDraw(g, I, w, h, el) {
   const H = SK_H, W = SK_W; if (skLow.width !== W || skLow.height !== H) { skLow.width = W; skLow.height = H; }
@@ -810,12 +813,69 @@ function skDraw(g, I, w, h, el) {
   trx.fillStyle = '#010208'; trx.fillRect(0, 0, w, h); trx.save(); trx.imageSmoothingEnabled = false; trx.drawImage(skLow, dx, dy, dw, dh); trx.restore(); trx.strokeStyle = '#25305c'; trx.strokeRect(dx - .5, dy - .5, dw + 1, dh + 1);
   T(g.down > 0 ? '기체 수리 중…' : g.rapid ? '' : source !== 'demo' ? '집중해야 발사!' : adminTest() ? '스페이스(집중)를 누르고 있어야 발사!' : '데모 모드에서는 발사되지 않아요 (기기 연결 필요)', w / 2, Math.round(h * .6), 'bold 15px sans-serif', '#ffd86b');
   if (el < 6) T(source === 'demo' && adminTest() ? '이동: ← → 키 또는 화면 왼쪽·오른쪽 누르기' : '이동: 왼쪽·오른쪽 윙크', w / 2, Math.round(h * .6) + 22, '13px sans-serif', '#cfd6f5'); }
+// ===================== 방울 개구리 (방울 쏘기 액션) · 도트 그림은 모두 자체 제작 =====================
+Object.assign(SK_PAL, { k: '#10142b', l: '#a7f3a0', m: '#2fbf5b', M: '#157a39', e: '#7dd3fc', E: '#2b7fd4', t: '#b45309' });
+Object.assign(SK_ART, {
+  frog1: ['..ww....ww..', '.wkww..wkww.', '.mwwmmmmwwm.', 'mmmmmmmmmmmm', 'mmmmmmmmmmmm', 'mMMMMMMMMMMm', 'mmllllllllmm', '.mllllllllm.', 'mmm.mmmm.mmm'],
+  frog2: ['..ww....ww..', '.wkww..wkww.', '.mwwmmmmwwm.', 'mmmmmmmmmmmm', 'mmmMkkkkMmmm', 'mmMkrrrrkMmm', 'mmlMkkkkMlmm', '.mllllllllm.', 'mmm.mmmm.mmm'],
+  slime1: ['...eeee...', '.eeeeeeee.', '.ewkeewke.', 'eeeeeeeeee', 'eeekkkkeee', 'eEEEEEEEEe', '.E.E..E.E.'],
+  slime2: ['..........', '...eeee...', '.eeeeeeee.', 'eewkeewkee', 'eeeekkeeee', 'eEEEEEEEEe', 'E.E.EE.E.E'],
+  bat1: ['p..........p', 'pp...pp...pp', 'ppppppppppPp', '.ppwkppwkpp.', '...pppppp...', '....p..p....'],
+  bat2: ['.....pp.....', '....pppp....', '.ppwkppwkpp.', 'ppppppppppPp', 'pp.pppppp.pp', 'p...p..p...p'],
+  beetle: ['..r......r..', '...r....r...', '..rrrrrrrr..', '.rrwkrrwkrr.', 'rrrrrrrrrrrr', 'rtttrrrrtttr', 'rttrrrrrrttr', '.rrrrrrrrrr.', '..k..kk..k..'],
+  cherry: ['....g..', '...g.g.', '..g..g.', '.rr..rr', 'rwrrrwr', 'rrr.rrr'] });
+const BB_FLOOR = [64, 118, 172];   // 발판 높이 (위→아래)
+// 관리자 테스트 조작은 skMove에서 처리 (↑↓ 또는 ←→)
+function bbSpawn(g, el) { const r = Math.random(), type = r < .55 ? 'slime' : r < .82 ? 'bat' : 'beetle', fl = Math.floor(Math.random() * 3);
+  g.en.push({ type, fl, x: SK_W + 8, y: BB_FLOOR[fl] - 5, v: (type === 'bat' ? 24 : type === 'beetle' ? 13 : 17) + el * .18, hp: type === 'beetle' ? 2 : 1, val: type === 'beetle' ? 2.5 : type === 'bat' ? 1.5 : 1, t: Math.random() * 6 }); }
+function bbStep(g, dt, el, I) {
+  const e = blinkNow(performance.now()); if (e === 'R' && g.fl > 0) { g.fl--; sfx([[392, .04], [523, .05]], .03); } if (e === 'L' && g.fl < 2) { g.fl++; sfx([[392, .04], [294, .05]], .03); }
+  const fy = BB_FLOOR[g.fl] - 5; g.y += (fy - g.y) * Math.min(1, dt * 12);
+  g.on = I.lv >= (g.on ? 95 : 100) || (space && source === 'demo' && adminTest()); g.big = I.lv >= 130; g.down = Math.max(0, g.down - dt); g.safe = Math.max(0, g.safe - dt);
+  // 집중하는 동안 입에서 방울이 커지고, 다 커지면 날아간다
+  if (g.on && g.down <= 0) { g.charge += dt * (g.big ? 2.6 : 1.9); if (g.charge >= 1) { g.charge = 0; g.bub.push({ x: 31, y: g.y, r: g.big ? 9 : 7, vx: g.big ? 108 : 82, go: g.big ? 140 : 100, t: 0, in: null }); sfx([[587, .03], [784, .05]], .03); } }
+  else g.charge = Math.max(0, g.charge - dt * 1.5);
+  g.spawn -= dt; if (g.spawn <= 0 && el < g.dur - 2) { bbSpawn(g, el); g.spawn = R(.5, .9); }
+  for (const m of g.en) { m.t += dt; m.x -= m.v * dt; m.y = BB_FLOOR[m.fl] - 5 + (m.type === 'bat' ? Math.sin(m.t * 5) * 7 - 6 : 0); m.hit = Math.max(0, (m.hit || 0) - dt); }
+  for (const b of g.bub) { b.t += dt;
+    if (b.in) { b.y -= 38 * dt; b.x += Math.sin(b.t * 7) * 14 * dt; if (b.t > .9 || b.y < 18) { b.dead = true; g.unit += b.in.val; g.kill++; skBoom(g, b.x, b.y, '#a5f3fc', 12); g.fruit.push({ x: b.x, y: b.y, v: 10 }); sfx([[988, .04], [1319, .08]], .04); } continue; }
+    if (b.go > 0) { const st = Math.min(b.go, b.vx * dt); b.x += st; b.go -= st; } else { b.y -= 16 * dt; b.x += Math.sin(b.t * 5) * 8 * dt; }
+    if (b.x > SK_W - b.r || b.y < 12 || b.t > 3) b.dead = true;
+    if (!b.dead) for (const m of g.en) if (m.hp > 0 && Math.abs(m.x - b.x) < b.r + 4 && Math.abs(m.y - b.y) < b.r + 4) { m.hp--; if (m.hp <= 0) { b.in = m; b.t = 0; b.r = Math.max(b.r, 9); sfx([[440, .03], [660, .05]], .03); } else { m.hit = .25; m.x += 9; b.dead = true; sfx([[300, .04]], .03); } break; } }
+  g.bub = g.bub.filter(b => !b.dead); g.en = g.en.filter(m => m.hp > 0);
+  for (const m of g.en) { if (m.x < 30 && m.fl === g.fl && g.safe <= 0 && g.down <= 0) { m.hp = 0; g.hit++; g.shield--; g.safe = 1.2; skBoom(g, 18, g.y, '#ff5d6c', 16); sfx([[196, .1], [130, .18]], .06); if (g.shield <= 0) { g.down = 2; g.shield = 3; g.msg = 'OUCH!'; g.msgT = 1.6; } } else if (m.x < -6) { m.hp = 0; g.miss++; sfx([[220, .06]], .025); } }
+  g.en = g.en.filter(m => m.hp > 0);
+  g.fruit.forEach(f => { f.v += 90 * dt; f.y += f.v * dt; }); g.fruit = g.fruit.filter(f => f.y < SK_H + 8);
+  g.fx.forEach(f => { f.x += f.vx * dt; f.y += f.vy * dt; f.life -= dt; }); g.fx = g.fx.filter(f => f.life > 0); g.msgT -= dt;
+  g.pts = Math.max(0, Math.min(100, g.unit * 100 / BB_GOAL - g.hit * 3 - g.miss)); }
+const BB_GOAL = 78;   // 이만큼 잡으면 100점 (임시 값, 실기기 시험 후 조정)
+function bbCircle(c, cx, cy, r, col) { c.fillStyle = col; const n = Math.ceil(r * 7); for (let i = 0; i < n; i++) { const a = i / n * 6.2832; c.fillRect(Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r), 1, 1); } }
+function bbDraw(g, I, w, h, el) {
+  const W = SK_W, H = SK_H; if (skLow.width !== W || skLow.height !== H) { skLow.width = W; skLow.height = H; }
+  const c = skLow.getContext('2d'); c.fillStyle = '#0b1033'; c.fillRect(0, 0, W, H);
+  for (let y = 0; y < H; y += 12) for (let x = ((y / 12) % 2) * 8 - 8; x < W; x += 16) { c.fillStyle = '#121a47'; c.fillRect(x + 1, y + 1, 14, 10); }
+  BB_FLOOR.forEach((fy, i) => { for (let x = 0; x < W; x += 9) { c.fillStyle = i === g.fl ? '#ff9f43' : '#a34ac9'; c.fillRect(x, fy, 8, 5); c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(x, fy, 8, 1); c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(x, fy + 4, 8, 1); } });
+  const fr = Math.floor(el * 4) % 2 + 1;
+  const put = (name, x, y, hurt) => { const sp = skSprite(name, hurt); c.drawImage(sp, Math.round(x - sp.width / 2), Math.round(y - sp.height / 2)); };
+  for (const m of g.en) { if (m.hit && Math.floor(el * 20) % 2) continue; put(m.type === 'beetle' ? 'beetle' : m.type + fr, m.x, m.type === 'beetle' ? m.y - 1 : m.y); }
+  if (g.down <= 0 && !(g.safe > 0 && Math.floor(el * 14) % 2)) put(g.on ? 'frog2' : 'frog1', 18, g.y);
+  else if (g.down > 0) put('frog1', 18, g.y + 2);
+  if (g.charge > .05) { const r = 2 + g.charge * (g.big ? 7 : 5); bbCircle(c, 24 + r, g.y + 1, r, '#a5f3fc'); c.fillStyle = '#fff'; c.fillRect(Math.round(24 + r - r / 2), Math.round(g.y + 1 - r / 2), 1, 1); }
+  for (const b of g.bub) { if (b.in) { const m = b.in; put(m.type === 'beetle' ? 'beetle' : m.type + fr, b.x, b.y); } c.globalAlpha = .18; c.fillStyle = '#a5f3fc'; c.beginPath(); c.arc(b.x, b.y, b.r, 0, 7); c.fill(); c.globalAlpha = 1; bbCircle(c, b.x, b.y, b.r, b.in ? '#f9a8d4' : '#a5f3fc'); c.fillStyle = '#fff'; c.fillRect(Math.round(b.x - b.r / 2), Math.round(b.y - b.r / 2), 2, 1); }
+  for (const f of g.fruit) put('cherry', f.x, f.y);
+  for (const f of g.fx) { c.fillStyle = f.life > .3 ? '#fff' : f.col; c.fillRect(Math.round(f.x), Math.round(f.y), f.life > .35 ? 2 : 1, f.life > .35 ? 2 : 1); }
+  pxText(c, String(Math.round(g.pts)).padStart(3, '0'), 4, 4, '#ffd84a', 1);
+  for (let i = 0; i < 3; i++) { c.fillStyle = i < g.shield ? '#4ade80' : '#33406e'; c.fillRect(4 + i * 7, 14, 5, 3); }
+  if (g.down <= 0) pxText(c, g.on ? (g.big ? 'BIG!' : 'BUBBLE!') : 'FOCUS...', 4, H - 12, g.on ? (g.big ? '#f9a8d4' : '#a5f3fc') : '#8a93b8', 1);
+  if (g.msgT > 0 && g.msg) pxText(c, g.msg, W / 2, H * .45, '#fff', 2, 'c');
+  const k = Math.min(w / W, h / H), dw = Math.round(W * k), dh = Math.round(H * k), dx = Math.round((w - dw) / 2), dy = Math.round((h - dh) / 2);
+  trx.fillStyle = '#010208'; trx.fillRect(0, 0, w, h); trx.save(); trx.imageSmoothingEnabled = false; trx.drawImage(skLow, dx, dy, dw, dh); trx.restore(); trx.strokeStyle = '#25305c'; trx.strokeRect(dx - .5, dy - .5, dw + 1, dh + 1);
+  const tx = w / 2, ty = dy + dh * .2;
+  if (g.down > 0) T('잠깐 기절…', tx, ty, 'bold 15px sans-serif', '#ffd86b'); else if (!g.on) T(source !== 'demo' ? '집중하면 방울이 나가요!' : adminTest() ? '스페이스(집중)를 누르고 있으면 방울이 나가요!' : '데모 모드에서는 방울이 나가지 않아요 (기기 연결 필요)', tx, ty, 'bold 14px sans-serif', '#ffd86b');
+  if (el < 6) T(source === 'demo' && adminTest() ? '층 이동: ↑ ↓ 키 또는 화면 위·아래 누르기' : '층 이동: 오른쪽 윙크 ▲ · 왼쪽 윙크 ▼', tx, ty + 20, '13px sans-serif', '#cfd6f5'); }
 const GAMES = [
-  { id: 'balloon', icon: '🎈', n: '풍선 띄우기', cat: '집중', dur: 40, d: '집중하면 풍선이 올라가요. 기준을 넘는 시간이 길수록 높이 올라갑니다. 방법: 풍선을 바라보며 머릿속으로 쉬운 암산(7+8, 15-6…)을 계속 이어가세요. 딴생각이 들면 풍선이 내려가요.', init: () => ({ h: 0 }),
-    frame(g, dt, el, I, w, h) { g.h = cl(g.h + (I.lv >= 105 ? Math.min(6, 1 + (I.lv - 105) / 15) : -2.2) * dt * 3.2, 0, 100); g.pts = Math.max(g.pts, g.h);
-      sky(w, h, '#0a1440', '#2b3f9a'); trx.fillStyle = 'rgba(255,255,255,.12)'; for (let i = 0; i < 5; i++) { trx.beginPath(); trx.ellipse((i * 197) % w, ((i * 110 + g.h * 6) % 560) - 50, 50, 16, 0, 0, 7); trx.fill(); }
-      const y = h - 70 - g.h / 100 * (h - 160), x = w / 2 + Math.sin(performance.now() / 700) * 8; trx.strokeStyle = 'rgba(255,255,255,.5)'; trx.beginPath(); trx.moveTo(x, y + 34); trx.quadraticCurveTo(x - 8, y + 70, x, h - 20); trx.stroke();
-      trx.fillStyle = I.lv >= 105 ? '#ff8a57' : '#8aa0c8'; trx.shadowColor = trx.fillStyle; trx.shadowBlur = 24; trx.beginPath(); trx.ellipse(x, y, 28, 34, 0, 0, 7); trx.fill(); trx.shadowBlur = 0; T(Math.round(g.h) + ' m', 14, 50, 'bold 16px sans-serif', '#fff', 'left'); } },
+  { id: 'balloon', icon: '🐸', n: '방울 개구리', cat: '집중', dur: 40, d: '집중하면 개구리 입에서 방울이 커지며 날아가요. 적을 방울에 가두면 터지면서 점수! 오른쪽 윙크는 위층, 왼쪽 윙크는 아래층으로 이동해요. 방법: 개구리를 바라보며 쉬운 암산(7+8, 15-6…)을 계속 이어가세요.', init: () => ({ fl: 1, y: 113, charge: 0, bub: [], en: [], fx: [], fruit: [], spawn: .3, unit: 0, kill: 0, hit: 0, miss: 0, shield: 3, down: 0, safe: 0, msg: '', msgT: 0, on: false, big: false }),
+    frame(g, dt, el, I, w, h) { if (dt > 0) bbStep(g, dt, el, I); bbDraw(g, I, w, h, el); } },
   { id: 'car', icon: '🏎', n: '자동차 경주', cat: '집중', dur: 40, d: '집중하면 내 차가 빨라져요. 집중이 오래 이어지면 부스트가 켜져요. 체크포인트를 지나 결승선에 상대보다 먼저 들어오세요. 방법: 도로 끝을 편안히 바라보며 쉬운 암산(7+8, 15-6…)을 계속 이어가세요.', init: () => ({ me: 0, rv: 0, sp: 0, bst: 0, hold: 0, dist: 0, bg: 0, bOn: false, cp: 0, msg: '', msgT: 0, flash: 0, sign: 0, bounce: 0 }),
     frame(g, dt, el, I, w, h) {
       const LW = Math.floor(w / 2), LH = Math.floor(h / 2);
