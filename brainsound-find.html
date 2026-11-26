@@ -109,9 +109,9 @@ function render() {
     try { photos[key] = photos[key] || bsRpc('bs_public_photo', { p_kind: k, p_id: id }); const src = await photos[key]; if (src && src.startsWith('data:image/jpeg;base64,')) { const im = new Image(); im.alt = '등록 사진'; im.src = src; box.replaceChildren(im); } } catch { delete photos[key]; } });
 }
 document.querySelectorAll('[data-kind]').forEach(b => b.onclick = () => { kind = b.dataset.kind; document.querySelectorAll('[data-kind]').forEach(x => x.classList.toggle('on', x === b)); render(); });
-$('regions').onclick = e => { const b = e.target.closest('[data-area]'); if (!b) return; area = b.dataset.area || null; if (map) area ? map.setView(SIDO[area], 9) : map.fitBounds(Object.values(SIDO)); render(); };
+$('regions').onclick = e => { const b = e.target.closest('[data-area]'); if (!b) return; area = b.dataset.area || null; if (map) area ? map.setView(SIDO[area], 9) : map.fitBounds([[33.2, 125.8], [38.4, 129.6]]); render(); };
 $('q').oninput = render;
-if (window.L) { map = L.map('map', { scrollWheelZoom: false }).fitBounds(Object.values(SIDO)); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '&copy; OpenStreetMap contributors' }).addTo(map); layer = L.layerGroup().addTo(map); }
+if (window.L) { map = L.map('map', { scrollWheelZoom: false, zoomSnap: .25 }).fitBounds([[33.2, 125.8], [38.4, 129.6]]); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '&copy; OpenStreetMap contributors' }).addTo(map); layer = L.layerGroup().addTo(map); }
 else $('map').innerHTML = '<div class="empty" style="padding-top:200px">지도를 불러오지 못했어요. 아래 지역 버튼으로 골라 주세요.</div>';
 async function load() { $('msg').textContent = '불러오는 중…'; try { D = await bsRpc('bs_find'); $('msg').textContent = ''; } catch { $('msg').textContent = '목록을 불러오지 못했어요. 인터넷을 확인해 주세요.'; $('msg').className = 'msg bad'; } render(); }
 render(); load();
