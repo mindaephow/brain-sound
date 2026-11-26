@@ -396,7 +396,7 @@ async function disconnect() { try { if (reader) await reader.cancel(); } catch {
 
 // ===================== 데모 (가짜 뇌파) =====================
 let demoBlinkSide = 'B', demoBlinkT = -1, demoTimer = null, demoT = 0, pinkL = 0, pinkR = 0, space = false, demoEyes = false, curSound = 'none', stage = null;
-const typing = e => /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '');
+const typing = e => /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '') && !/^(checkbox|radio|button)$/.test(e.target.type);   // 체크박스에 커서가 있어도 게임 키는 동작
 // 관리자 테스트 기기: 본사 관리자 화면에서 켠 컴퓨터만 스페이스(집중)·방향키로 조작할 수 있음
 function adminTest() { if (location.protocol !== 'https:' && location.protocol !== 'http:') return true;   // 내 컴퓨터의 파일로 연 경우(개발·시험)
   try { return localStorage.getItem('bs_admin_test') === '1'; } catch { return false; } }
@@ -763,7 +763,8 @@ function skStep(g, dt, el, I, W) {
   const e = blinkNow(performance.now()); if (e === 'L' && g.lane > 0) { g.lane--; sfx([[330, .04]], .03); } if (e === 'R' && g.lane < 4) { g.lane++; sfx([[392, .04]], .03); }
   if (g.x === null) g.x = lane(g.lane); g.x += (lane(g.lane) - g.x) * Math.min(1, dt * 9);
   // 집중해야 발사 (100% 이상, 흔들림에 끊기지 않게 95% 아래로 내려가면 멈춤). 많이 집중하면 두 줄
-  g.rapid = I.lv >= (g.rapid ? 95 : 100) || (space && source === 'demo' && adminTest());   // 관리자 테스트: 스페이스를 누르는 즉시 발사 g.twin = I.lv >= 130; g.cool -= dt; g.down = Math.max(0, g.down - dt); g.safe = Math.max(0, g.safe - dt);
+  // 관리자 테스트에서는 스페이스를 누르는 즉시 발사
+  g.rapid = I.lv >= (g.rapid ? 95 : 100) || (space && source === 'demo' && adminTest()); g.twin = I.lv >= 130; g.cool -= dt; g.down = Math.max(0, g.down - dt); g.safe = Math.max(0, g.safe - dt);
   if (g.cool <= 0 && g.down <= 0) { if (g.rapid) { g.cool = .34; (g.twin ? [-4, 4] : [0]).forEach(o => g.shot.push({ x: g.x + o, y: py - 8 })); sfx([[880, .025]], .018); } else g.cool = 0; }
   g.shot.forEach(b => b.y -= 175 * dt); g.shot = g.shot.filter(b => b.y > -6);
   // 편대: 위에서 들어와 좌우로 흔들리고, 가끔 한 마리가 내려온다
