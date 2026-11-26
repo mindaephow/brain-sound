@@ -208,6 +208,7 @@
 <section class="tab" id="t-settings">
   <h1>설정</h1>
   <p class="sub">나에게 맞게 분석하기 위한 정보입니다. 이름은 받지 않고, 닉네임만 사용합니다.</p>
+  <div class="card" style="max-width:600px"><h2>회원 (학교 반 입장)</h2><div id="memBox" class="hint">확인 중…</div><div class="row" style="margin-top:12px"><a class="btn" href="brainsound-register.html" target="_blank" style="text-decoration:none">반 코드로 입장하기</a></div></div>
   <div class="card" style="max-width:600px"><h2>내 정보</h2>
     <div style="display:grid;gap:16px">
       <label class="fld">닉네임<input id="pfNick" maxlength="12" placeholder="예: 집중왕 (실명은 쓰지 마세요)"></label>
@@ -819,6 +820,7 @@ function trStop() { tr = null; $('trStart').textContent = '훈련 시작'; trRen
 function trEnd() {
   const G = GAMES.find(x => x.id === tr.id), pts = Math.round(cl(tr.g.pts, 0, 100)), avgF = tr.lvT ? Math.round(tr.lvSum / tr.lvT) : 100;
   const recs = store.get('bs_pc_train') || []; recs.push({ t: new Date().toISOString(), game: G.id, pts, avgF, dur: tr.dur, sit, sitName: sitName() }); store.set('bs_pc_train', recs.slice(-600));
+  bsTrain(G.id, pts, avgF, tr.dur, source === 'demo');
   const best = trBest(); const prev = best[G.id]; if (prev === undefined || pts > prev) { best[G.id] = pts; store.set('bs_pc_trbest', best); }
   if (tr.contest) { ctAdd(G.id, pts); bsSubmit(tr, G.id, pts); } tr.phase = 'result'; tr.pts = pts; tr.prev = prev; tr.win = tr.g.pos > 0 || (tr.g.me > tr.g.rv); $('trStart').textContent = tr.id === 'car' ? '차 고르고 다시 하기' : '다시 하기'; const earn = ($('fast').checked && !tr.contest) ? 0 : Math.round(pts * .5) + (tr.win ? 20 : 0); if (earn) store.set('bs_pc_coins', coins() + earn); $('trMsg').textContent = (tr.contest ? `대회 도전을 마쳤어요 🏆 (${ctTries(G.id)}/${CT_MAX}회)` : '기록이 저장됐어요 ✔') + (earn ? ` · +${earn}코인 (보유 ${coins()})` : ' · 연습 모드는 코인이 없어요'); trRender(); if (typeof renderTrainLog === 'function') renderTrainLog(); }
 function erf(x) { const t = 1 / (1 + .3275911 * Math.abs(x)), y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - .284496736) * t + .254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; }
@@ -851,10 +853,15 @@ async function bsSubmit(t, game, pts) {
   const st = bsGet('bs_student'); if (!st) { t.cMsg = '학생 입장 전이라 대회 순위에는 올라가지 않았어요'; return; }
   t.cMsg = '서버에 점수를 올리는 중…';
   try { const r = await bsRpc('bs_submit_score', { p_key: st.key, p_game: game, p_points: pts });
-    if (!r.ok) t.cMsg = r.msg; else { t.cMsg = '점수가 서버에 올라갔어요'; const rows = await bsRpc('bs_ranking', { p_game: game }), me = rows.find(x => x.nick === st.nick); if (me) t.cMsg = `이번 주 ${me.rank}위 / ${rows.length}명`; } }
+    if (!r.ok) t.cMsg = r.msg; else { t.cMsg = '점수가 서버에 올라갔어요'; const rows = await bsRpc('bs_ranking', { p_game: game }), me = rows.find(x => x.nick === st.nick && (!st.school || x.school === st.school)); if (me) t.cMsg = `이번 주 ${me.rank}위 / ${rows.length}명`; } }
   catch { if (t.cMsg !== '점수가 서버에 올라갔어요') t.cMsg = '서버에 점수를 올리지 못했어요 (인터넷 확인)'; }
   sendCtState();
 }
+// 회원 정보 동기화: 관리자가 닉네임을 바꾸거나 삭제하면 이 브라우저에도 반영
+async function bsSync() { const st = bsGet('bs_student'); if (!st) return null; try { const m = await bsRpc('bs_me', { p_key: st.key }); const now = bsGet('bs_student'); if (!now || now.key !== st.key) return now; if (!m) { localStorage.removeItem('bs_student'); return null; } const nx = { key: st.key, nick: m.nick, cls: m.cls, school: m.school }; localStorage.setItem('bs_student', JSON.stringify(nx)); return nx; } catch { return st; } }
+// 회원이면 훈련 기록을 서버에도 저장 (관리자·담당 교사 확인용)
+function bsTrain(game, points, avg, dur, demo) { const st = bsGet('bs_student'); if (!st) return; bsRpc('bs_submit_train', { p_key: st.key, p_game: game, p_points: points, p_avg: Math.min(1000, Math.max(0, avg)), p_dur: Math.round(dur), p_demo: demo }).then(r => bsMember(r.ok ? '' : r.msg)).catch(() => bsMember('방금 훈련 기록을 서버에 저장하지 못했어요.')); }
+function bsMember(note) { const box = document.getElementById('memBox'), st = bsGet('bs_student'); if (!box) return; box.textContent = (st ? `${st.school ? st.school + ' · ' : ''}${st.cls} · ${st.nick} 회원이에요. 훈련·대회 기록이 서버에 저장돼요.` : '입장 전이에요. 기록은 이 컴퓨터에만 남고 대회 순위에 올라가지 않아요.') + (note ? ' ⚠ ' + note : ''); }
 const CT_MAX = 3, CT_NAMES = ['뇌파왕', '집중냥', '번개손', '고요한숲', '민트초코', '파란고래', '느긋한곰', '별빛러너', '초집중토끼', '새벽공부러', '말랑두뇌', '불꽃슛돌이', '조용한호랑이', '구름산책', '알파파도', '베타번개', '세타요정', '레몬에이드', '깜빡이장군', '하늘다람쥐', '뚝심거북', '노을카페', '단단한바위', '반짝별똥', '솜사탕펀치', '용감한펭귄', '차분한파도', '두근두근', '해바라기씨', '졸린올빼미'];
 const ctWeekStart = () => { const d = new Date(), k = (d.getDay() + 6) % 7; return new Date(d.getFullYear(), d.getMonth(), d.getDate() - k); };
 const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -870,7 +877,7 @@ const ctTier = avg => avg >= 85 ? ['💎 다이아', '#7dd3fc'] : avg >= 70 ? ['
 let ctWin = null;
 function ctState() {
   const st = ctWeekStart(), en = new Date(st.getFullYear(), st.getMonth(), st.getDate() + 6), left = Math.max(0, Math.ceil((new Date(st.getFullYear(), st.getMonth(), st.getDate() + 7) - new Date()) / 86400000));
-  return { type: 'bs-contest-state', week: `${st.getMonth() + 1}/${st.getDate()}(월) ~ ${en.getMonth() + 1}/${en.getDate()}(일)`, daysLeft: left, max: CT_MAX, coins: coins(), nick: ((store.get('bs_pc_profile') || {}).nick) || '나', sel: trSel, busy: !!(tr && tr.phase !== 'result'),
+  return { type: 'bs-contest-state', week: `${st.getMonth() + 1}/${st.getDate()}(월) ~ ${en.getMonth() + 1}/${en.getDate()}(일)`, daysLeft: left, max: CT_MAX, coins: coins(), nick: (bsGet('bs_student') || {}).nick || ((store.get('bs_pc_profile') || {}).nick) || '나', sel: trSel, busy: !!(tr && tr.phase !== 'result'),
     games: GAMES.map(G => ({ id: G.id, icon: G.icon, n: G.n, cat: G.cat, tries: ctTries(G.id), best: ctBest(G.id), field: ctField(G.id) })) };
 }
 function sendCtState(to) { try { const w = to || ctWin; if (w && !w.closed) w.postMessage(ctState(), '*'); } catch {} }
@@ -1075,6 +1082,7 @@ renderDevs();
 loadProfile(); updatePfWarn();
 
 setSit(sit);
+bsMember(); bsSync().then(() => bsMember()); addEventListener('storage', e => { if (e.key === 'bs_student') bsMember(); }); addEventListener('focus', () => bsSync().then(() => bsMember()));
 </script>
 </body>
 </html>
