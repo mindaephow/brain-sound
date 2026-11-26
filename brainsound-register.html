@@ -202,7 +202,7 @@ $('tcGo').onclick = () => { const name = $('tcName').value.trim(), mail = $('tcM
     const kept = put('bs_teacher_keys', [...keys(), r.teacher_key]); say('tcMsg', kept ? '담당 신청이 접수됐어요. 승인 대기 중이에요.' : '신청은 접수됐지만 이 브라우저에 저장하지 못했어요.', kept ? 'ok' : 'bad'); $('tcName').value = $('tcMail').value = $('tcCode').value = ''; $('tcAgree').checked = false; await loadMine(); }); };
 $('tcRe').onclick = () => send('tcRe', 'tcMsg', async () => { if (!await loadMine()) throw 0; say('tcMsg', '새로 불러왔어요.', 'ok'); });
 
-[['balloon', '방울 개구리'], ['car', '자동차 경주'], ['puzzle', '퍼즐 맞추기'], ['dragon', '별빛 편대'], ['candle', '촛불 끄기'], ['flower', '꽃 피우기'], ['axe', '도끼 던지기'], ['archery', '양궁'], ['balance', '좌우 균형'], ['tug', '번개 100미터']].forEach(g => $('rpGame').add(new Option(g[1], g[0])));
+[['balloon', '방울 개구리'], ['car', '자동차 경주'], ['puzzle', '보석 블록'], ['dragon', '별빛 편대'], ['candle', '숨결 촛불'], ['flower', '꽃길 산책'], ['axe', '번개 창던지기'], ['archery', '바람 양궁'], ['balance', '외줄타기'], ['tug', '번개 100미터']].forEach(g => $('rpGame').add(new Option(g[1], g[0])));
 let rp = null;   // 불러온 목록의 { key, game }
 const rpClear = () => { rp = null; $('rpList').innerHTML = ''; $('rpSave').disabled = true; say('rpMsg', ''); };
 async function rpFill() { const k = $('clTeacher').value, g = $('rpGame').value; const r = await bsRpc('bs_teacher_reps', { p_key: k, p_game: g }); if (!r.ok) return say('rpMsg', r.msg, 'bad'); rp = { key: k, game: g };
@@ -229,7 +229,12 @@ $('tc2Go').onclick = () => { const cls = $('tc2Class').value, nick = $('tc2Nick'
   if (!cls) return say('tc2Msg', '반을 먼저 만들어 주세요.', 'bad'); if (nick.length < 2) return say('tc2Msg', '닉네임을 2자 이상 입력해 주세요.', 'bad'); if (!age || age < 6 || age > 13) return say('tc2Msg', '만 6~13세를 입력해 주세요.', 'bad'); if (!$('tc2Got').checked) return say('tc2Msg', '서명한 동의서를 받았는지 확인에 체크해 주세요.', 'bad');
   send('tc2Go', 'tc2Msg', async () => { const r = await bsRpc('bs_teacher_add_child', { p_key: $('clTeacher').value, p_class_code: cls, p_nick: nick, p_age: age, p_rank: $('tc2Rank').checked, p_received: true }); if (!r.ok) return say('tc2Msg', r.msg, 'bad');
     $('tc2Box').hidden = false; $('tc2Code').textContent = r.enter_code; say('tc2Msg', '등록됐어요 ✔', 'ok'); $('tc2Nick').value = $('tc2Age').value = ''; $('tc2Rank').checked = $('tc2Got').checked = false; await loadMine(); }); };
+// 회원 정보 동기화: 관리자가 닉네임을 바꾸거나 삭제하면 이 브라우저에도 반영
+async function bsSync() { const st = bsGet('bs_student'); if (!st) return null; try { const m = await bsRpc('bs_me', { p_key: st.key }); const now = bsGet('bs_student'); if (!now || now.key !== st.key) return now; if (!m) { localStorage.removeItem('bs_student'); return null; } const nx = { key: st.key, nick: m.nick, cls: m.cls, school: m.school }; localStorage.setItem('bs_student', JSON.stringify(nx)); return nx; } catch { return st; } }
 render(); loadSchools(); loadMine(); bsSync().then(render);
+const keepGet = k => { try { return JSON.parse(sessionStorage.getItem(k)); } catch { return null; } };
+const keepSet = (k, v) => { try { if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, JSON.stringify(v)); } catch {} };
+{ const w = keepGet('bs_reg_step'); const b = w && document.querySelector(`.st[data-t="${w}"]`); if (b) b.click(); document.querySelectorAll('.st').forEach(x => x.addEventListener('click', () => keepSet('bs_reg_step', x.dataset.t))); }
 </script>
 </body>
 </html>

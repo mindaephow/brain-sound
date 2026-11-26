@@ -125,7 +125,7 @@ const bsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch {
 const $ = id => document.getElementById(id);
 const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const say = (id, t, k) => { const e = $(id); e.textContent = t; e.className = 'msg ' + (k || ''); };
-const GN = { balloon: '방울 개구리', car: '자동차 경주', puzzle: '퍼즐 맞추기', dragon: '별빛 편대', candle: '촛불 끄기', flower: '꽃 피우기', axe: '도끼 던지기', archery: '양궁', balance: '좌우 균형', tug: '번개 100미터' };
+const GN = { balloon: '방울 개구리', car: '자동차 경주', puzzle: '보석 블록', dragon: '별빛 편대', candle: '숨결 촛불', flower: '꽃길 산책', axe: '번개 창던지기', archery: '바람 양궁', balance: '외줄타기', tug: '번개 100미터' };
 const when = t => t ? new Date(t).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
 const NET = '처리하지 못했어요. 인터넷 연결과 4번(훈련장·트레이너) SQL 실행 여부를 확인해 주세요.';
 let me = null, D = null, only = null, shown = null;   // 로그인 정보는 저장하지 않고 이 창이 열려 있는 동안만 기억
@@ -188,6 +188,12 @@ $('profile').onsubmit = e => { e.preventDefault(); send('pfSave', 'pfMsg', async
 const clearProfile = () => { $('profile').reset(); showPhoto(null); say('pfMsg', ''); say('phMsg', ''); };
 $('re').onclick = () => act('bs_center_overview', {}, '새로 불러왔어요.');
 $('out').onclick = () => { clearProfile(); pwClose(); me = D = only = shown = null; $('main').hidden = true; $('front').hidden = false; $('detail').hidden = true; ['trainers', 'classes', 'students', 'detail', 'stats', 'who'].forEach(i => $(i).innerHTML = ''); say('msg', ''); };
+const keepGet = k => { try { return JSON.parse(sessionStorage.getItem(k)); } catch { return null; } };
+const keepSet = (k, v) => { try { if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, JSON.stringify(v)); } catch {} };
+// 새로고침해도 로그인 유지 (이 창을 닫거나 '나가기'를 누르면 지워짐)
+setInterval(() => { if (me && !$('main').hidden) keepSet('bs_center_keep', me); }, 500);
+$('out').addEventListener('click', () => keepSet('bs_center_keep', null));
+{ const w = keepGet('bs_center_keep'); if (w && w.p_email) { me = w; load().then(r => { if (r.ok) { $('front').hidden = true; $('main').hidden = false; loadProfile(); } else { me = null; keepSet('bs_center_keep', null); } }).catch(() => { me = null; }); } }
 </script>
 </body>
 </html>
