@@ -732,6 +732,73 @@ function carEngine(on, sp, bst) { try {
   ensureAudio(); const t = actx.currentTime;
   if (!carEng) { const o1 = actx.createOscillator(), o2 = actx.createOscillator(), g = actx.createGain(); o1.type = 'square'; o2.type = 'sawtooth'; g.gain.value = 0; o1.connect(g); o2.connect(g); g.connect(master); o1.start(); o2.start(); carEng = { o1, o2, g }; }
   carEng.o1.frequency.setTargetAtTime(52 + sp * 44 + bst * 30, t, .1); carEng.o2.frequency.setTargetAtTime(26 + sp * 22 + bst * 15, t, .1); carEng.g.gain.setTargetAtTime(.035 + .02 * bst, t, .12); } catch {} }
+// ===================== 별빛 편대 (편대 비행 슈팅) · 도트 그림은 모두 자체 제작 =====================
+// 글자 한 칸 = 점 하나. 색은 SK_PAL.
+const SK_PAL = { w: '#f4f7ff', c: '#5ee7ff', b: '#3b6cff', n: '#1f2f8f', r: '#ff5d6c', o: '#ffb02e', y: '#ffe45c', g: '#4ade80', G: '#1d8f55', p: '#c77dff', P: '#6f2dbd' };
+const SK_ART = {
+  ship: ['.....w.....', '.....w.....', '....wcw....', '....wcw....', '.b..wwww..b', '.b.wwbww.b.', 'bbwwbbbwwbb', 'bwwwwwwwwwb', 'b..r.o.r..b'],
+  bug1: ['..g.....g..', '...g...g...', '..ggggggg..', '.ggyggGyg..', 'ggggggggggg', 'g.ggggggg.g', '..G.....G..'],
+  bug2: ['...g...g...', '..g.....g..', '..ggggggg..', '.ggyggGyg..', '.ggggggggg.', '..ggggggg..', '.G.......G.'],
+  moth1: ['oo.......oo', 'ooo.r.r.ooo', '.ooorrrooo.', '..orywyro..', '.ooorrrooo.', 'ooo..r..ooo', 'o.........o'],
+  moth2: ['...........', '.oo.r.r.oo.', 'ooooorroooo', 'oorrywyrroo', '.ooorrrooo.', '..o..r..o..', '...........'],
+  boss: ['...p.....p...', '....p...p....', '..ppppppppp..', '.ppPPpppPPpp.', 'pppyyPpPyyppp', 'pppyyPpPyyppp', 'ppppppppppppp', 'p.pPpppppPp.p', 'p.p.P...P.p.p', '...PP...PP...'] };
+const skCache = {};
+function skSprite(name, hurt) { const k = name + (hurt ? '!' : ''); if (skCache[k]) return skCache[k]; const rows = SK_ART[name], c = document.createElement('canvas'); c.width = rows[0].length; c.height = rows.length; const x = c.getContext('2d');
+  rows.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '.') return; x.fillStyle = hurt ? (ch === 'p' ? '#5ee7ff' : ch === 'P' ? '#2563a8' : SK_PAL[ch]) : SK_PAL[ch]; x.fillRect(i, j, 1, 1); })); return skCache[k] = c; }
+const skLow = document.createElement('canvas'), SK_W = 170, SK_H = 190;   // 경기장 크기는 모든 기기에서 같음 (점수 공정성)
+function skWave(g, W) { g.wave++; g.en = []; const cols = 7, gap = Math.min(22, (W - 26) / cols);
+  [['boss', 3, 2, 3], ['moth', 5, 1, 1.5], ['bug', 7, 1, 1], ['bug', 7, 1, 1]].forEach(([type, n, hp, val], row) => { for (let i = 0; i < n; i++) {
+    const ox = (i - (n - 1) / 2) * (type === 'boss' ? gap * 1.5 : gap), oy = 20 + row * 14; const k = row * 7 + i;
+    g.en.push({ type, hp, val, ox, oy, x: 0, y: -20, t: -k * .045, from: k % 2 ? 1 : -1, mode: 'in' }); } });
+  g.msg = 'WAVE ' + g.wave; g.msgT = 1.4; }
+function skBoom(g, x, y, col, n) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = 15 + Math.random() * 55; g.fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: .35 + Math.random() * .3, col }); } }
+function skStep(g, dt, el, I, W) {
+  const H = SK_H, lane = i => W * (i + .5) / 5, py = H - 16;
+  // 윙크로 한 칸씩 이동 (양쪽 깜빡임은 무시)
+  const e = blinkNow(performance.now()); if (e === 'L' && g.lane > 0) { g.lane--; sfx([[330, .04]], .03); } if (e === 'R' && g.lane < 4) { g.lane++; sfx([[392, .04]], .03); }
+  if (g.x === null) g.x = lane(g.lane); g.x += (lane(g.lane) - g.x) * Math.min(1, dt * 9);
+  // 집중: 연사. 많이 집중하면 두 줄로 발사
+  g.rapid = I.lv >= 100; g.twin = I.lv >= 130; g.cool -= dt; g.down = Math.max(0, g.down - dt); g.safe = Math.max(0, g.safe - dt);
+  if (g.cool <= 0 && g.down <= 0) { g.cool = g.rapid ? .34 : 1.5; (g.twin ? [-4, 4] : [0]).forEach(o => g.shot.push({ x: g.x + o, y: py - 8 })); if (g.rapid) sfx([[880, .025]], .018); }
+  g.shot.forEach(b => b.y -= 175 * dt); g.shot = g.shot.filter(b => b.y > -6);
+  // 편대: 위에서 들어와 좌우로 흔들리고, 가끔 한 마리가 내려온다
+  if (!g.en.length) { g.next -= dt; if (g.next <= 0) { skWave(g, W); g.next = .9; } }
+  const sway = Math.sin(el * .9) * Math.max(6, (W - 170) / 2 + 8);
+  g.dive -= dt; if (g.dive <= 0) { const c = g.en.filter(m => m.mode === 'form'); if (c.length) { const m = c[Math.floor(Math.random() * c.length)]; m.mode = 'dive'; m.t = 0; m.tx = g.x; m.sx = m.x; m.sy = m.y; sfx([[660, .05], [440, .07]], .025); } g.dive = R(1.9, 3.1); }
+  for (const m of g.en) { const hx = W / 2 + m.ox + sway, hy = m.oy;
+    if (m.mode === 'in') { m.t += dt * 1.25; const k = Math.max(0, Math.min(1, m.t)), q = 1 - (1 - k) * (1 - k); m.x = hx + m.from * (1 - q) * W * .55 * Math.cos((1 - q) * 2); m.y = -20 + (hy + 20) * q + Math.sin(q * Math.PI) * 40 * (1 - q); if (k >= 1) m.mode = 'form'; }
+    else if (m.mode === 'form') { m.x = hx; m.y = hy + Math.sin(el * 3 + m.ox) * 1.2; }
+    else if (m.mode === 'dive') { m.t += dt; m.y = m.sy + m.t * 78; m.x = m.sx + (m.tx - m.sx) * Math.min(1, m.t / 1.4) + Math.sin(m.t * 6) * 11; if (m.y > H + 12) { m.mode = 'in'; m.t = 0; } } }
+  // 맞힘
+  for (const b of g.shot) for (const m of g.en) { if (b.dead || m.hp <= 0 || m.t < 0) continue; const hw = m.type === 'boss' ? 8 : 6.5;
+    if (Math.abs(b.x - m.x) <= hw && Math.abs(b.y - m.y) <= 6) { b.dead = true; m.hp--; if (m.hp <= 0) { const v = m.val * (m.mode === 'dive' ? 1.5 : 1); g.unit += v; g.kill++; skBoom(g, m.x, m.y, m.type === 'boss' ? '#c77dff' : m.type === 'moth' ? '#ffb02e' : '#4ade80', m.type === 'boss' ? 18 : 10); sfx([[220, .04], [150, .06]], .035); } else sfx([[520, .03]], .025); } }
+  g.shot = g.shot.filter(b => !b.dead); g.en = g.en.filter(m => m.hp > 0);
+  // 부딪힘: 보호막 1칸 감소
+  for (const m of g.en) if (m.mode === 'dive' && g.safe <= 0 && g.down <= 0 && Math.abs(m.x - g.x) < 10 && Math.abs(m.y - py) < 9) { m.hp = 0; g.hit++; g.shield--; g.safe = 1.2; skBoom(g, g.x, py, '#ff5d6c', 20); sfx([[196, .1], [130, .18]], .06); if (g.shield <= 0) { g.down = 2; g.shield = 3; g.msg = 'REPAIR'; g.msgT = 1.6; } break; }
+  g.en = g.en.filter(m => m.hp > 0);
+  g.fx.forEach(f => { f.x += f.vx * dt; f.y += f.vy * dt; f.life -= dt; }); g.fx = g.fx.filter(f => f.life > 0); g.msgT -= dt;
+  g.scroll += dt * (g.rapid ? 46 : 22);
+  g.pts = Math.max(0, Math.min(100, g.unit * 100 / SK_GOAL - g.hit * 3)); }
+const SK_GOAL = 78;   // 이만큼 격추하면 100점 (임시 값, 실기기 시험 후 조정)
+function skDraw(g, I, w, h, el) {
+  const H = SK_H, W = SK_W; if (skLow.width !== W || skLow.height !== H) { skLow.width = W; skLow.height = H; }
+  const c = skLow.getContext('2d'), py = H - 16;
+  c.fillStyle = '#03040f'; c.fillRect(0, 0, W, H);
+  for (let i = 0; i < 70; i++) { const sp = 1 + (i % 3) * .8, x = (i * 97 + 13) % W, y = (i * 53 + g.scroll * sp) % H; c.fillStyle = ['#44508a', '#8f9bff', '#fff'][i % 3]; c.globalAlpha = i % 7 === 0 ? .35 + .65 * Math.abs(Math.sin(el * 3 + i)) : .8; c.fillRect(x, Math.floor(y), 1, i % 3 === 2 && g.rapid ? 3 : 1); } c.globalAlpha = 1;
+  const fr = Math.floor(el * 4) % 2 + 1;
+  for (const m of g.en) { if (m.mode === 'in' && m.t < 0) continue; const sp = m.type === 'boss' ? skSprite('boss', m.hp < 2) : skSprite(m.type + fr); c.drawImage(sp, Math.round(m.x - sp.width / 2), Math.round(m.y - sp.height / 2)); }
+  for (const b of g.shot) { c.fillStyle = '#ffe45c'; c.fillRect(Math.round(b.x), Math.round(b.y), 1, 5); c.fillStyle = '#ff5d6c'; c.fillRect(Math.round(b.x), Math.round(b.y) + 5, 1, 1); }
+  const x = g.x === null ? W / 2 : g.x;
+  if (g.down <= 0 && !(g.safe > 0 && Math.floor(el * 14) % 2)) { const sp = skSprite('ship'); c.drawImage(sp, Math.round(x - 5.5), py - 5); c.fillStyle = Math.floor(el * 20) % 2 ? '#ffb02e' : '#ff5d6c'; c.fillRect(Math.round(x) - 2, py + 4, 1, g.rapid ? 4 : 2); c.fillRect(Math.round(x) + 2, py + 4, 1, g.rapid ? 4 : 2); }
+  for (const f of g.fx) { c.fillStyle = f.life > .3 ? '#fff' : f.col; c.fillRect(Math.round(f.x), Math.round(f.y), f.life > .35 ? 2 : 1, f.life > .35 ? 2 : 1); }
+  for (let i = 0; i < 5; i++) { c.fillStyle = i === g.lane ? '#5ee7ff' : '#25305c'; c.fillRect(Math.round(W * (i + .5) / 5) - 5, H - 3, 10, 1); }
+  pxText(c, String(Math.round(g.pts)).padStart(3, '0'), 4, 4, '#ffd84a', 1);
+  for (let i = 0; i < 3; i++) { c.fillStyle = i < g.shield ? '#4ade80' : '#33406e'; c.fillRect(4 + i * 7, 14, 5, 3); }
+  if (g.rapid) pxText(c, g.twin ? 'TWIN!' : 'RAPID!', 4, H - 14, g.twin ? '#5ee7ff' : '#ffb02e', 1);
+  if (g.msgT > 0 && g.msg) pxText(c, g.msg, W / 2, H * .52, '#fff', 2, 'c');
+  const k = Math.min(w / W, h / H), dw = Math.round(W * k), dh = Math.round(H * k), dx = Math.round((w - dw) / 2), dy = Math.round((h - dh) / 2);
+  trx.fillStyle = '#010208'; trx.fillRect(0, 0, w, h); trx.save(); trx.imageSmoothingEnabled = false; trx.drawImage(skLow, dx, dy, dw, dh); trx.restore(); trx.strokeStyle = '#25305c'; trx.strokeRect(dx - .5, dy - .5, dw + 1, dh + 1);
+  T(g.down > 0 ? '기체 수리 중…' : g.rapid ? '' : '집중하면 연사!  ·  윙크 ◀ ▶ 로 이동', w / 2, Math.round(h * .64), '13px sans-serif', '#cfd6f5'); }
 const GAMES = [
   { id: 'balloon', icon: '🎈', n: '풍선 띄우기', cat: '집중', dur: 40, d: '집중하면 풍선이 올라가요. 기준을 넘는 시간이 길수록 높이 올라갑니다. 방법: 풍선을 바라보며 머릿속으로 쉬운 암산(7+8, 15-6…)을 계속 이어가세요. 딴생각이 들면 풍선이 내려가요.', init: () => ({ h: 0 }),
     frame(g, dt, el, I, w, h) { g.h = cl(g.h + (I.lv >= 105 ? Math.min(6, 1 + (I.lv - 105) / 15) : -2.2) * dt * 3.2, 0, 100); g.pts = Math.max(g.pts, g.h);
@@ -809,11 +876,8 @@ const GAMES = [
     frame(g, dt, el, I, w, h) { if (I.lv >= 100) g.t += dt; const n = Math.min(12, Math.floor(g.t / (g.dur * .5 / 12))); g.pts = n / 12 * 100; sky(w, h, '#0b1130', '#101a4a'); const cw = Math.min(w * .78, 520) / 4, ch = cw * .75, x0 = (w - cw * 4) / 2, y0 = 56;
       for (let i = 0; i < 12; i++) { const cx0 = x0 + (i % 4) * cw, cy0 = y0 + Math.floor(i / 4) * ch; if (i < n) { const gr = trx.createLinearGradient(cx0, cy0, cx0 + cw, cy0 + ch); gr.addColorStop(0, `hsl(${i * 28},80%,60%)`); gr.addColorStop(1, `hsl(${i * 28 + 40},80%,45%)`); trx.fillStyle = gr; } else trx.fillStyle = 'rgba(255,255,255,.07)'; trx.fillRect(cx0 + 2, cy0 + 2, cw - 4, ch - 4); if (i >= n) T('?', cx0 + cw / 2, cy0 + ch / 2 + 8, '22px sans-serif', 'rgba(255,255,255,.3)'); }
       T(`${n} / 12 조각`, w / 2, 32, 'bold 16px sans-serif', '#fff'); } },
-  { id: 'dragon', icon: '🐉', n: '드래곤 마을 지키기', cat: '집중', dur: 40, d: '집중하면 드래곤이 불을 뿜어 몬스터를 막아요. 집중이 떨어지면 마을이 공격받아요. 방법: 드래곤을 바라보며 쉬운 암산(7+8, 15-6…)을 계속 이어가세요.', init: () => ({ hp: 100, mons: [], spawn: 1, sum: 0 }),
-    frame(g, dt, el, I, w, h) { const on = I.lv >= 100; g.spawn -= dt; if (g.spawn <= 0) { g.mons.push({ x: w + 20, y: R(.2, .75) * h }); g.spawn = R(1.1, 1.9); }
-      g.mons.forEach(m => m.x -= 90 * dt); g.mons = g.mons.filter(m => { if (on && m.x < w * .62) return false; if (m.x < 90) { g.hp = Math.max(0, g.hp - 9); return false; } return true; }); g.hp = Math.min(100, g.hp + (on ? 3 : 0) * dt); g.sum += g.hp * dt; g.pts = g.sum / Math.max(el, .1);
-      sky(w, h, '#1b1038', '#3b1d5a'); emoji('🏘', 52, h - 40, 56); const dy = h * .45 + Math.sin(el * 2) * 12; emoji('🐉', w * .3, dy, 60); if (on) { trx.strokeStyle = '#ffb347'; trx.lineWidth = 6; trx.beginPath(); trx.moveTo(w * .3 + 30, dy); trx.lineTo(w * .62, dy); trx.stroke(); }
-      g.mons.forEach(m => emoji('👾', m.x, m.y, 34)); trx.fillStyle = 'rgba(255,255,255,.15)'; trx.fillRect(14, 38, 160, 10); trx.fillStyle = g.hp > 40 ? '#4ade80' : '#ff8a57'; trx.fillRect(14, 38, 160 * g.hp / 100, 10); T('마을 체력', 14, 32, '12px sans-serif', '#cfd6f5', 'left'); } },
+  { id: 'dragon', icon: '🚀', n: '별빛 편대', cat: '집중', dur: 40, d: '집중하면 연사! 왼쪽·오른쪽 윙크로 우주선을 움직여 편대를 격추하세요. 내려오는 적과 부딪히면 점수가 깎여요. 방법: 우주선을 바라보며 쉬운 암산(7+8, 15-6…)을 계속 이어가세요.', init: () => ({ lane: 2, x: null, cool: .6, shot: [], en: [], fx: [], wave: 0, next: .2, dive: 4, unit: 0, kill: 0, hit: 0, shield: 3, down: 0, safe: 0, scroll: 0, msg: '', msgT: 0, rapid: false, twin: false }),
+    frame(g, dt, el, I, w, h) { if (dt > 0) skStep(g, dt, el, I, SK_W); skDraw(g, I, w, h, el); } },
   { id: 'candle', icon: '🕯', n: '촛불 끄기', cat: '순간 집중', dur: 40, d: '짧고 강하게 집중을 끌어올리면 촛불이 꺼져요. 5개를 끄면 만점! 방법: 촛불을 바라보다가, 숫자를 빠르게 세거나 암산을 짧고 강하게 몰아서 하세요.', init: () => ({ n: 0, power: 0, cool: 0 }),
     frame(g, dt, el, I, w, h) { if (g.cool > 0) g.cool -= dt; else { g.power = Math.max(0, g.power - 22 * dt); if (I.lv >= 125) g.power += (I.lv - 100) * dt * 1.1; if (g.power >= 100) { g.n++; g.power = 0; g.cool = 1.4; } } g.pts = Math.min(100, g.n / 5 * 100);
       sky(w, h, '#120a10', '#2a1a22'); const lit = g.cool <= 0 && g.n < 5; trx.fillStyle = '#f5e6c8'; trx.fillRect(w / 2 - 22, h * .5, 44, 120); if (lit) { const f = 1 - g.power / 130, fl = Math.sin(el * 14) * 3; trx.fillStyle = 'rgba(255,200,80,.25)'; trx.beginPath(); trx.arc(w / 2, h * .5 - 16, 70 * f + 20, 0, 7); trx.fill(); trx.fillStyle = '#ffb347'; trx.beginPath(); trx.ellipse(w / 2 + fl * g.power / 100, h * .5 - 18, 11 * f + 2, 28 * f + 5, 0, 0, 7); trx.fill(); } else T(g.n >= 5 ? '🎉' : '💨', w / 2, h * .5 - 20, '38px sans-serif');
@@ -1146,13 +1210,13 @@ bsMember(); bsSync().then(() => bsMember()); addEventListener('storage', e => { 
     if (k === 'focus') { space = true; b.classList.add('hold'); try { b.setPointerCapture(e.pointerId); } catch {} }
     else if (k === 'eyes') { demoEyes = !demoEyes; b.classList.toggle('hold', demoEyes); }
     else { demoBlinkSide = k; demoBlinkT = demoT / FS; } });
-  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => pad.addEventListener(t, up)); addEventListener('blur', up);
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => pad.addEventListener(t, up)); addEventListener('blur', () => { space = false; pad.querySelector('[data-k=focus]').classList.remove('hold'); });
   pad.addEventListener('contextmenu', e => e.preventDefault());
   if (/Android|iPhone|iPad/.test(navigator.userAgent)) { const c = document.getElementById('btnConnect'); if (c.textContent === '아두이노 연결') c.textContent = '기기 연결 (USB)'; }
-  let lock = null, asking = false;
+  let lock = null, asking = false, wasOn = false;
   setInterval(async () => {
     const on = source === 'demo' && phone.matches; pad.classList.toggle('on', on); document.body.classList.toggle('padOn', on);
-    if (!on) up();
+    if (!on && wasOn) up(); wasOn = on;   // 터치 버튼이 사라질 때만 해제 (PC 키보드 입력은 건드리지 않음)
     if (!navigator.wakeLock || !phone.matches) return;
     if (source && !lock && !asking && document.visibilityState === 'visible') { asking = true; try { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => lock = null); } catch {} asking = false; }
     else if (!source && lock) lock.release();

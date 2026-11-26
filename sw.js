@@ -1,5 +1,5 @@
 // 설치형 앱: 항상 최신 파일을 먼저 받고, 인터넷이 안 될 때만 저장해 둔 파일을 씁니다.
-const CACHE = 'brainsound-v2';
+const CACHE = 'brainsound-v3';
 const CORE = ['/brainsound-pc.html', '/manifest.webmanifest', '/icons/app-192.png', '/icons/app-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
