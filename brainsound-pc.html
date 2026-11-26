@@ -779,6 +779,10 @@ function skStep(g, dt, el, I, W) {
   g.fx.forEach(f => { f.x += f.vx * dt; f.y += f.vy * dt; f.life -= dt; }); g.fx = g.fx.filter(f => f.life > 0); g.msgT -= dt;
   g.scroll += dt * (g.rapid ? 46 : 22);
   g.pts = Math.max(0, Math.min(100, g.unit * 100 / SK_GOAL - g.hit * 3)); }
+// 데모 모드(기기 없음)에서만: 방향키 ← →, 또는 게임 화면의 왼쪽·오른쪽 클릭/터치로 이동. 실제 기기에서는 윙크로만 움직임.
+function skMove(d) { if (source !== 'demo' || !tr || tr.id !== 'dragon' || tr.phase !== 'play') return false; const n = Math.max(0, Math.min(4, tr.g.lane + d)); if (n !== tr.g.lane) { tr.g.lane = n; sfx([[d < 0 ? 330 : 392, .04]], .03); } return true; }
+addEventListener('keydown', e => { if ((e.code === 'ArrowLeft' || e.code === 'ArrowRight') && skMove(e.code === 'ArrowLeft' ? -1 : 1)) e.preventDefault(); });
+document.getElementById('trCv').addEventListener('pointerdown', e => { const r = e.currentTarget.getBoundingClientRect(); skMove(e.clientX - r.left < r.width / 2 ? -1 : 1); });
 const SK_GOAL = 78;   // 이만큼 격추하면 100점 (임시 값, 실기기 시험 후 조정)
 function skDraw(g, I, w, h, el) {
   const H = SK_H, W = SK_W; if (skLow.width !== W || skLow.height !== H) { skLow.width = W; skLow.height = H; }
@@ -798,7 +802,7 @@ function skDraw(g, I, w, h, el) {
   if (g.msgT > 0 && g.msg) pxText(c, g.msg, W / 2, H * .52, '#fff', 2, 'c');
   const k = Math.min(w / W, h / H), dw = Math.round(W * k), dh = Math.round(H * k), dx = Math.round((w - dw) / 2), dy = Math.round((h - dh) / 2);
   trx.fillStyle = '#010208'; trx.fillRect(0, 0, w, h); trx.save(); trx.imageSmoothingEnabled = false; trx.drawImage(skLow, dx, dy, dw, dh); trx.restore(); trx.strokeStyle = '#25305c'; trx.strokeRect(dx - .5, dy - .5, dw + 1, dh + 1);
-  T(g.down > 0 ? '기체 수리 중…' : g.rapid ? '' : '집중하면 연사!  ·  윙크 ◀ ▶ 로 이동', w / 2, Math.round(h * .64), '13px sans-serif', '#cfd6f5'); }
+  T(g.down > 0 ? '기체 수리 중…' : g.rapid && el > 6 ? '' : source === 'demo' ? '이동: ← → 키 또는 화면 왼쪽·오른쪽 누르기' : '집중하면 연사!  ·  윙크 ◀ ▶ 로 이동', w / 2, Math.round(h * .64), '13px sans-serif', '#cfd6f5'); }
 const GAMES = [
   { id: 'balloon', icon: '🎈', n: '풍선 띄우기', cat: '집중', dur: 40, d: '집중하면 풍선이 올라가요. 기준을 넘는 시간이 길수록 높이 올라갑니다. 방법: 풍선을 바라보며 머릿속으로 쉬운 암산(7+8, 15-6…)을 계속 이어가세요. 딴생각이 들면 풍선이 내려가요.', init: () => ({ h: 0 }),
     frame(g, dt, el, I, w, h) { g.h = cl(g.h + (I.lv >= 105 ? Math.min(6, 1 + (I.lv - 105) / 15) : -2.2) * dt * 3.2, 0, 100); g.pts = Math.max(g.pts, g.h);
