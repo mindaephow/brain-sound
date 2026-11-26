@@ -70,7 +70,13 @@
   <div id="main" hidden>
     <div class="stats" id="stats"></div>
     <div class="tabs" id="tabs"></div>
-    <div class="row" style="margin-bottom:14px"><input class="search" id="q" placeholder="이름·닉네임·학교·코드 검색" aria-label="검색"><span class="tag" id="filter" hidden></span><button class="btn sm" id="clear" hidden>선택 해제</button><span style="flex:1"></span><button class="btn sm" id="re">새로고침</button><button class="btn sm" id="out">나가기</button></div>
+    <div class="row" style="margin-bottom:14px"><input class="search" id="q" placeholder="이름·닉네임·학교·코드 검색" aria-label="검색"><span class="tag" id="filter" hidden></span><button class="btn sm" id="clear" hidden>선택 해제</button><span style="flex:1"></span><button class="btn sm" id="re">새로고침</button><button class="btn sm" id="pwOpen">비밀번호 변경</button><button class="btn sm" id="out">나가기</button></div>
+    <form class="card" id="pwForm" style="max-width:460px" hidden><h3>비밀번호 변경</h3>
+      <div class="form" style="grid-template-columns:1fr"><label class="f">지금 비밀번호<input type="password" id="pwOld" autocomplete="current-password" class="search"></label>
+      <label class="f">새 비밀번호 (10자 이상)<input type="password" id="pwNew" autocomplete="new-password" class="search"></label>
+      <label class="f">새 비밀번호 다시 입력<input type="password" id="pwNew2" autocomplete="new-password" class="search"></label></div>
+      <div class="row" style="margin-top:16px"><button class="btn pri" id="pwSave">변경하기</button><button type="button" class="btn" id="pwCancel">닫기</button><span class="msg" id="pwMsg"></span></div>
+    </form>
     <div class="row" style="margin-bottom:10px"><span class="msg" id="msg"></span></div>
     <div class="card"><div class="scroll" id="list"></div></div>
     <div class="card" id="detail" hidden></div>
@@ -144,8 +150,15 @@ $('q').oninput = () => render();
 $('clear').addEventListener('click', () => { only = null; render(); });
 $('login').onsubmit = async e => { e.preventDefault(); pw = $('pw').value; if (!pw) return say('inMsg', '비밀번호를 입력해 주세요.', 'bad'); $('inBtn').disabled = true; say('inMsg', '확인 중…');
   try { const r = await load(); if (!r.ok) say('inMsg', r.msg, 'bad'); else { $('login').hidden = true; $('main').hidden = false; $('pw').value = ''; say('inMsg', ''); } } catch { say('inMsg', NET, 'bad'); } $('inBtn').disabled = false; };
+const pwClose = () => { $('pwForm').reset(); $('pwForm').hidden = true; say('pwMsg', ''); };
+$('pwOpen').onclick = () => { $('pwForm').hidden = false; $('pwOld').focus(); };
+$('pwCancel').onclick = pwClose;
+$('pwForm').onsubmit = async e => { e.preventDefault(); const o = $('pwOld').value, n = $('pwNew').value;
+  if (!o) return say('pwMsg', '지금 비밀번호를 입력해 주세요.', 'bad'); if (n.length < 10) return say('pwMsg', '새 비밀번호는 10자 이상으로 해 주세요.', 'bad'); if (n !== $('pwNew2').value) return say('pwMsg', '새 비밀번호 두 칸이 서로 달라요.', 'bad');
+  $('pwSave').disabled = true; say('pwMsg', '변경 중…');
+  try { const r = await bsRpc('bs_admin_change_password', { p_old: o, p_new: n }); if (!r.ok) say('pwMsg', r.msg, 'bad'); else { pw = n; pwClose(); say('msg', '비밀번호를 변경했어요 ✔', 'ok'); } } catch { say('pwMsg', NET, 'bad'); } $('pwSave').disabled = false; };
 $('re').onclick = () => act('bs_admin_overview', {}, '새로 불러왔어요.');
-$('out').onclick = () => { pw = ''; D = null; only = shown = null; $('main').hidden = true; $('detail').hidden = true; $('login').hidden = false; $('list').innerHTML = $('detail').innerHTML = $('stats').innerHTML = ''; };
+$('out').onclick = () => { pwClose(); pw = ''; D = null; only = shown = null; $('main').hidden = true; $('detail').hidden = true; $('login').hidden = false; $('list').innerHTML = $('detail').innerHTML = $('stats').innerHTML = ''; };
 </script>
 </body>
 </html>
