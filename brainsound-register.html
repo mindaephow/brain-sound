@@ -202,7 +202,7 @@ $('tcGo').onclick = () => { const name = $('tcName').value.trim(), mail = $('tcM
     const kept = put('bs_teacher_keys', [...keys(), r.teacher_key]); say('tcMsg', kept ? '담당 신청이 접수됐어요. 승인 대기 중이에요.' : '신청은 접수됐지만 이 브라우저에 저장하지 못했어요.', kept ? 'ok' : 'bad'); $('tcName').value = $('tcMail').value = $('tcCode').value = ''; $('tcAgree').checked = false; await loadMine(); }); };
 $('tcRe').onclick = () => send('tcRe', 'tcMsg', async () => { if (!await loadMine()) throw 0; say('tcMsg', '새로 불러왔어요.', 'ok'); });
 
-[['balloon', '방울 개구리'], ['car', '자동차 경주'], ['puzzle', '퍼즐 맞추기'], ['dragon', '별빛 편대'], ['candle', '촛불 끄기'], ['flower', '꽃 피우기'], ['axe', '도끼 던지기'], ['archery', '양궁'], ['balance', '좌우 균형'], ['tug', '뇌파 줄다리기']].forEach(g => $('rpGame').add(new Option(g[1], g[0])));
+[['balloon', '방울 개구리'], ['car', '자동차 경주'], ['puzzle', '퍼즐 맞추기'], ['dragon', '별빛 편대'], ['candle', '촛불 끄기'], ['flower', '꽃 피우기'], ['axe', '도끼 던지기'], ['archery', '양궁'], ['balance', '좌우 균형'], ['tug', '번개 100미터']].forEach(g => $('rpGame').add(new Option(g[1], g[0])));
 let rp = null;   // 불러온 목록의 { key, game }
 const rpClear = () => { rp = null; $('rpList').innerHTML = ''; $('rpSave').disabled = true; say('rpMsg', ''); };
 async function rpFill() { const k = $('clTeacher').value, g = $('rpGame').value; const r = await bsRpc('bs_teacher_reps', { p_key: k, p_game: g }); if (!r.ok) return say('rpMsg', r.msg, 'bad'); rp = { key: k, game: g };

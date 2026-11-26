@@ -789,9 +789,11 @@ function skStep(g, dt, el, I, W) {
 const testPlay = id => adminTest() && source === 'demo' && tr && tr.id === id && tr.phase === 'play';
 function skMove(d) { if (!testPlay('dragon')) return false; const n = Math.max(0, Math.min(4, tr.g.lane + d)); if (n !== tr.g.lane) { tr.g.lane = n; sfx([[d < 0 ? 330 : 392, .04]], .03); } return true; }
 function bbMove(d) { if (!testPlay('balloon')) return false; const n = Math.max(0, Math.min(2, tr.g.fl + d)); if (n !== tr.g.fl) { tr.g.fl = n; sfx([[d < 0 ? 523 : 294, .04]], .03); } return true; }
+function dsKey() { if (!testPlay('tug')) return false; dsJump(tr.g); return true; }
+addEventListener('keydown', e => { if (e.code === 'ArrowUp' && !e.repeat && dsKey()) e.preventDefault(); });
 addEventListener('keydown', e => { const lr = { ArrowLeft: -1, ArrowRight: 1 }[e.code], ud = { ArrowUp: -1, ArrowDown: 1 }[e.code];
   if ((lr && skMove(lr)) || ((ud || lr) && bbMove(ud || -lr))) e.preventDefault(); });
-document.getElementById('trCv').addEventListener('pointerdown', e => { const r = e.currentTarget.getBoundingClientRect(); skMove(e.clientX - r.left < r.width / 2 ? -1 : 1); bbMove(e.clientY - r.top < r.height / 2 ? -1 : 1); });
+document.getElementById('trCv').addEventListener('pointerdown', e => { const r = e.currentTarget.getBoundingClientRect(); skMove(e.clientX - r.left < r.width / 2 ? -1 : 1); bbMove(e.clientY - r.top < r.height / 2 ? -1 : 1); dsKey(); });
 const SK_GOAL = 78;   // 이만큼 격추하면 100점 (임시 값, 실기기 시험 후 조정)
 function skDraw(g, I, w, h, el) {
   const H = SK_H, W = SK_W; if (skLow.width !== W || skLow.height !== H) { skLow.width = W; skLow.height = H; }
@@ -873,6 +875,62 @@ function bbDraw(g, I, w, h, el) {
   const tx = w / 2, ty = dy + dh * .2;
   if (g.down > 0) T('잠깐 기절…', tx, ty, 'bold 15px sans-serif', '#ffd86b'); else if (!g.on) T(source !== 'demo' ? '집중하면 방울이 나가요!' : adminTest() ? '스페이스(집중)를 누르고 있으면 방울이 나가요!' : '데모 모드에서는 방울이 나가지 않아요 (기기 연결 필요)', tx, ty, 'bold 14px sans-serif', '#ffd86b');
   if (el < 6) T(source === 'demo' && adminTest() ? '층 이동: ↑ ↓ 키 또는 화면 위·아래 누르기' : '층 이동: 오른쪽 윙크 ▲ · 왼쪽 윙크 ▼', tx, ty + 20, '13px sans-serif', '#cfd6f5'); }
+// ===================== 번개 100미터 (달리기·허들) · 도트 그림은 모두 자체 제작 =====================
+const DS_HURDLE = [25, 45, 65, 85], DS_M = 9;   // 허들 위치(m), 1m = 9점
+const DS_ART = {   // h 머리카락, s 살색, u 윗옷, v 바지, k 신발·눈
+  run1: ['...hhh..', '..hhhhs.', '..hsks..', '..hssss.', '...ss...', '..uuuu..', '.suuuus.', 's.uuuu.s', '..vvvv..', '.vv..vv.', 'kk....vv', '......kk'],
+  run2: ['...hhh..', '..hhhhs.', '..hsks..', '..hssss.', '...ss...', '..uuuu..', '..suuu..', '..suus..', '..vvvv..', '...vvv..', '..kk.v..', '.....kk.'],
+  stand: ['...hhh..', '..hhhhs.', '..hsks..', '..hssss.', '...ss...', '..uuuu..', '.suuuus.', '.suuuus.', '..vvvv..', '..v..v..', '..v..v..', '..kk.kk.'],
+  jump: ['....hhh.', '...hhhhs', '...hsks.', 's..hssss', '.s..ss..', '..uuuu.s', '...uuuus', '...uuu..', '.vvvvvvk', 'kv....kk', 'k.......', '........'],
+  fall: ['........', '........', '........', '........', '....hhh.', '...hhhhs', '...hsks.', '.s.hssss', '..suuus.', '.vvuuu..', 'kvv..s..', 'kk......'] };
+const dsCache = {};
+function dsSprite(pose, col) { const k = pose + col.u; if (dsCache[k]) return dsCache[k]; const rows = DS_ART[pose], c = document.createElement('canvas'); c.width = rows[0].length; c.height = rows.length; const x = c.getContext('2d'), pal = { h: col.h, s: col.s, u: col.u, v: col.v, k: '#12142a' };
+  rows.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '.') return; x.fillStyle = pal[ch]; x.fillRect(i, j, 1, 1); })); return dsCache[k] = c; }
+const DS_ME = { h: '#3b2416', s: '#f0c8a0', u: '#ffd84a', v: '#2b4fd8' }, DS_R1 = { h: '#111', s: '#c98f63', u: '#ff5d6c', v: '#eee' }, DS_R2 = { h: '#8a3b12', s: '#f3d2b3', u: '#4ade80', v: '#2a2f52' };
+function dsStep(g, dt, el, I) {
+  if (g.finish !== null) { g.after += dt; g.me += g.v * dt * Math.max(0, 1 - g.after); if (g.after > 1.8) g.end = true; }
+  const test = space && source === 'demo' && adminTest();
+  g.on = g.finish === null && (I.lv >= (g.on ? 95 : 100) || test);
+  const lv = test ? Math.max(I.lv, 140) : I.lv;
+  g.down = Math.max(0, g.down - dt); g.air = Math.max(0, g.air - dt);
+  // 눈 깜빡임(아무 쪽) = 점프
+  if (blinkNow(performance.now()) && g.finish === null) dsJump(g);
+  if (g.finish === null) {
+    const target = g.on && g.down <= 0 ? 4 + 4.2 * Math.max(0, Math.min(1, (lv - 100) / 40)) : 0;   // 집중해야 달림: 100%에서 초속 4m, 140%에서 8.2m
+    g.v += (target - g.v) * Math.min(1, dt * (target > g.v ? 2.6 : 3.5)); if (g.v < .05) g.v = 0;
+    const before = g.me; g.me += g.v * dt; g.step += g.v * dt;
+    for (let i = 0; i < DS_HURDLE.length; i++) { const hx = DS_HURDLE[i]; if (before < hx && g.me >= hx && !g.down_h[i]) { if (g.air <= 0) { g.down_h[i] = true; g.v *= .15; g.down = .8; g.hit++; g.msg = 'OUCH!'; g.msgT = .9; sfx([[196, .09], [131, .16]], .06); } else { g.msg = 'NICE!'; g.msgT = .6; sfx([[988, .05], [1319, .07]], .04); } } }
+    if (g.me >= 100) { g.finish = el; g.msg = 'GOAL!'; g.msgT = 2; sfx([[784, .1], [988, .1], [1175, .1], [1568, .3]], .08); } }
+  g.rv.forEach(r => { if (r.t === null) { r.me += r.v * Math.min(1, el / 2.5) * dt; if (r.me >= 100) r.t = el; } else r.me = Math.min(106, r.me + r.v * dt * .4); });
+  g.msgT -= dt;
+  g.pts = g.finish !== null ? Math.max(50, Math.min(100, 100 - (g.finish - DS_BEST) * 2.4) - g.hit * 3) : Math.max(0, Math.min(49, g.me * .55 - g.hit * 2)); }   // 허들에 걸릴 때마다 감점
+const DS_BEST = 15.5;   // 이 시간 안에 들어오면 100점 (임시 값, 실기기 시험 후 조정)
+function dsJump(g) { if (g.air <= 0 && g.down <= 0) { g.air = .75; sfx([[523, .04], [784, .07]], .03); } }
+function dsDraw(g, I, w, h, el) {
+  const W = SK_W, H = SK_H; if (skLow.width !== W || skLow.height !== H) { skLow.width = W; skLow.height = H; }
+  const c = skLow.getContext('2d'), cam = Math.max(0, Math.min(g.me, 100)) * DS_M - 40, R_ = (x, y, wd, ht, col) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), wd, ht); };
+  R_(0, 0, W, 30, '#4aa8ff'); R_(0, 30, W, 10, '#8fd0ff');
+  for (let i = 0; i < 4; i++) { const x = ((i * 71 - cam * .08) % 220 + 220) % 220 - 30; R_(x, 8 + (i % 2) * 9, 18, 4, '#fff'); R_(x + 4, 5 + (i % 2) * 9, 9, 3, '#fff'); }
+  R_(0, 40, W, 44, '#4b3f6b'); for (let r = 0; r < 6; r++) { const off = Math.round(cam * .35) % 6; for (let x = -6; x < W + 6; x += 6) { const k = Math.floor((x + Math.round(cam * .35)) / 6) * 7 + r * 13; const wave = g.on && Math.floor(el * 8 + k) % 5 === 0 ? 1 : 0; R_(x - off + (r % 2) * 3, 44 + r * 6 - wave, 3, 3, ['#ffd84a', '#ff5d6c', '#7dd3fc', '#f4f7ff', '#4ade80'][((k % 5) + 5) % 5]); } }
+  R_(0, 84, W, 8, '#e8e8f0'); for (let x = -((Math.round(cam * .7)) % 34); x < W; x += 34) pxText(c, 'BRAIN', x, 85, '#2f43c4', 1, 'l', false);
+  R_(0, 92, W, H - 92, '#c8542f'); [92, 122, 154, H - 1].forEach(y => R_(0, y, W, 1, '#fbe3d5'));
+  for (let m = 0; m <= 110; m += 10) { const x = m * DS_M - cam; if (x > -30 && x < W) { R_(x, 92, 1, H - 92, 'rgba(255,255,255,.35)'); pxText(c, m + 'M', x + 2, 182, '#ffe9dc', 1, 'l', false); } }
+  const fx = 100 * DS_M - cam; if (fx > -10 && fx < W + 10) { for (let y = 92; y < H; y += 4) { R_(fx, y, 3, 2, '#fff'); R_(fx, y + 2, 3, 2, '#111'); } if (g.finish === null) R_(fx - 1, 130, 5, 2, '#ffd84a'); R_(fx + 3, 62, 2, 30, '#ddd'); R_(fx + 5, 63, 12, 8, '#ff5d6c'); }
+  const runner = (m, base, col, air, down, moving, phase) => { const x = m * DS_M - cam, jump = air > 0 ? Math.sin((1 - air / .75) * Math.PI) * 22 : 0, pose = down > 0 ? 'fall' : air > 0 ? 'jump' : !moving ? 'stand' : (Math.floor(phase * 1.4) % 2 ? 'run1' : 'run2'), sp = dsSprite(pose, col);
+    R_(x - 6, base - 1, 13, 2, 'rgba(0,0,0,.28)'); c.drawImage(sp, Math.round(x - 8), Math.round(base - 24 - jump), 16, 24); if (moving && air <= 0 && down <= 0 && Math.floor(phase * 3) % 2) { R_(x - 13, base - 3, 3, 2, '#f1b79d'); } };
+  runner(g.rv[0].me, 118, DS_R1, 0, 0, g.rv[0].t === null, g.rv[0].me); runner(g.rv[1].me, 148, DS_R2, 0, 0, g.rv[1].t === null, g.rv[1].me);
+  DS_HURDLE.forEach((hx, i) => { const x = hx * DS_M - cam; if (x < -12 || x > W + 12) return; if (g.down_h[i]) { R_(x, 177, 12, 2, '#fff'); R_(x + 8, 174, 2, 5, '#ddd'); } else { R_(x - 1, 164, 2, 16, '#ddd'); R_(x + 4, 164, 2, 16, '#ddd'); R_(x - 3, 162, 11, 3, '#fff'); R_(x - 3, 162, 3, 3, '#ff5d6c'); R_(x + 5, 162, 3, 3, '#ff5d6c'); } });
+  runner(g.me, 180, DS_ME, g.air, g.down, g.v > .3, g.step); const mx = g.me * DS_M - cam; R_(mx - 2, 149 - (g.air > 0 ? Math.sin((1 - g.air / .75) * Math.PI) * 22 : 0), 5, 2, '#ffd84a'); R_(mx - 1, 151 - (g.air > 0 ? Math.sin((1 - g.air / .75) * Math.PI) * 22 : 0), 3, 2, '#ffd84a');
+  const rank = 1 + g.rv.filter(r => g.finish !== null ? r.t !== null && r.t < g.finish : r.me > g.me).length, t = g.finish !== null ? g.finish : el;
+  R_(0, 0, W, 13, 'rgba(0,0,10,.6)'); pxText(c, t.toFixed(1), 4, 3, '#ffd84a', 1); pxText(c, Math.min(100, Math.floor(g.me)) + 'M', W / 2, 3, '#fff', 1, 'c'); pxText(c, ['1ST', '2ND', '3RD'][rank - 1], W / 2 + 28, 3, rank === 1 ? '#4ade80' : '#ffb02e', 1, 'l');
+  if (g.finish === null) pxText(c, g.on ? (g.v > 7 ? 'SPRINT!' : 'RUN!') : 'FOCUS...', 4, 17, g.on ? (g.v > 7 ? '#ff5d6c' : '#14306e') : '#14306e', 1, 'l', false);
+  const next = DS_HURDLE.find(x => x > g.me); if (g.finish === null && next !== undefined && next - g.me < Math.max(3, g.v * .7) && g.v > 1 && Math.floor(el * 8) % 2) pxText(c, 'JUMP!', mx + 6, 138, '#fff', 2, 'l');
+  if (g.msgT > 0 && g.msg) pxText(c, g.msg, W / 2, 56, '#fff', 3, 'c');
+  const k = Math.min(w / W, h / H), dw = Math.round(W * k), dh = Math.round(H * k), dx = Math.round((w - dw) / 2), dy = Math.round((h - dh) / 2);
+  trx.fillStyle = '#010208'; trx.fillRect(0, 0, w, h); trx.save(); trx.imageSmoothingEnabled = false; trx.drawImage(skLow, dx, dy, dw, dh); trx.restore(); trx.strokeStyle = '#25305c'; trx.strokeRect(dx - .5, dy - .5, dw + 1, dh + 1);
+  const tx = w / 2, ty = dy + dh * .3, tag = (t, y, col) => { trx.font = 'bold 13px sans-serif'; const bw = trx.measureText(t).width + 18; trx.fillStyle = 'rgba(5,8,30,.82)'; trx.fillRect(tx - bw / 2, y - 15, bw, 21); T(t, tx, y, 'bold 13px sans-serif', col); };
+  if (g.finish === null && !g.on && g.down <= 0) tag(source !== 'demo' ? '집중해야 달려요!' : adminTest() ? '스페이스(집중)를 누르고 있으면 달려요!' : '데모 모드에서는 달릴 수 없어요 (기기 연결 필요)', ty, '#ffd86b');
+  if (el < 6 && g.finish === null) tag(source === 'demo' && adminTest() ? '허들 점프: ↑ 키 또는 화면 누르기' : '허들 앞에서 눈을 깜빡이면 점프!', ty + 26, '#fff'); }
 const GAMES = [
   { id: 'balloon', icon: '🐸', n: '방울 개구리', cat: '집중', dur: 40, d: '집중하면 개구리 입에서 방울이 커지며 날아가요. 적을 방울에 가두면 터지면서 점수! 오른쪽 윙크는 위층, 왼쪽 윙크는 아래층으로 이동해요. 방법: 개구리를 바라보며 쉬운 암산(7+8, 15-6…)을 계속 이어가세요.', init: () => ({ fl: 1, y: 113, charge: 0, bub: [], en: [], fx: [], fruit: [], spawn: .3, unit: 0, kill: 0, hit: 0, miss: 0, shield: 3, down: 0, safe: 0, msg: '', msgT: 0, on: false, big: false }),
     frame(g, dt, el, I, w, h) { if (dt > 0) bbStep(g, dt, el, I); bbDraw(g, I, w, h, el); } },
@@ -972,11 +1030,8 @@ const GAMES = [
     frame(g, dt, el, I, w, h) { g.mp += (I.pct - g.mp) * Math.min(1, dt * 4); const inZ = Math.abs(I.pct - .5) < .074; if (inZ) g.inZ += dt; g.pts = g.inZ / Math.max(el, .1) * 100; sky(w, h, '#0d1a3a', '#16206a'); const bx = w * .1, bw = w * .8, by = h / 2 - 14;
       trx.fillStyle = 'rgba(255,255,255,.1)'; trx.fillRect(bx, by, bw, 28); trx.fillStyle = 'rgba(74,222,128,.35)'; trx.fillRect(bx + bw * (.5 - .074), by, bw * .148, 28); trx.fillStyle = inZ ? '#4ade80' : '#fff'; trx.beginPath(); trx.arc(bx + bw * g.mp, by + 14, 16, 0, 7); trx.fill();
       T('왼쪽', bx + 20, by + 60, '14px sans-serif', '#6b9cff'); T('오른쪽', bx + bw - 24, by + 60, '14px sans-serif', '#ff8a57'); T(inZ ? '균형이 맞았어요 ✔' : '가운데로 맞춰 보세요', w / 2, h - 30, '16px sans-serif', '#cfd6f5'); T(`균형 유지 ${g.inZ.toFixed(1)}초`, 14, 42, 'bold 15px sans-serif', '#fff', 'left'); } },
-  { id: 'tug', icon: '💪', n: '뇌파 줄다리기', cat: '대결', dur: 40, d: '집중하면 줄이 내 쪽으로 와요. 상대(AI 시뮬레이션)보다 더 집중해서 끌어당기세요! 방법: 줄을 바라보며 쉬운 암산(7+8, 15-6…)을 계속 이어가세요.', init: () => ({ pos: 0 }),
-    frame(g, dt, el, I, w, h) { const my = cl((I.lv - 100) / 100, -.6, .9), opp = .18 + .22 * Math.sin(el * .7) + .1 * Math.sin(el * 1.9); g.pos = cl(g.pos + (my - opp) * dt * .45, -1, 1); g.pts = 50 + 50 * g.pos; if (Math.abs(g.pos) >= 1) g.end = true;
-      sky(w, h, '#1a1030', '#2a1a4a'); const cy0 = h / 2, mx = w / 2 - g.pos * w * .38; trx.strokeStyle = '#d4a373'; trx.lineWidth = 8; trx.beginPath(); trx.moveTo(60, cy0); trx.lineTo(w - 60, cy0); trx.stroke(); trx.fillStyle = '#ef4444'; trx.fillRect(mx - 8, cy0 - 22, 16, 44);
-      trx.fillStyle = 'rgba(107,156,255,.25)'; trx.fillRect(0, cy0 - 70, w * .12, 140); trx.fillStyle = 'rgba(255,138,87,.25)'; trx.fillRect(w * .88, cy0 - 70, w * .12, 140); emoji('🙋', 40, cy0 + 12, 40); emoji('🤖', w - 40, cy0 + 12, 40);
-      T('나', 40, cy0 - 46, 'bold 14px sans-serif', '#6b9cff'); T('상대(AI)', w - 40, cy0 - 46, 'bold 13px sans-serif', '#ff8a57'); T(g.pos > .1 ? '내가 이기고 있어요!' : g.pos < -.1 ? '끌려가고 있어요' : '팽팽해요', w / 2, h - 30, '16px sans-serif', '#cfd6f5'); } }
+  { id: 'tug', icon: '🏃', n: '번개 100미터', cat: '대결', dur: 40, d: '집중해야 달려요! 깊이 집중할수록 빨라집니다. 허들 앞에서 눈을 깜빡이면 점프해요. 상대(AI)보다 먼저 결승선에 들어오세요. 방법: 선수를 바라보며 쉬운 암산(7+8, 15-6…)을 계속 이어가세요.', init: () => ({ me: 0, v: 0, step: 0, air: 0, down: 0, down_h: [], hit: 0, finish: null, after: 0, msg: 'READY!', msgT: 1, on: false, rv: [{ me: 0, v: R(5.3, 5.9), t: null }, { me: 0, v: R(4.1, 4.7), t: null }] }),
+    frame(g, dt, el, I, w, h) { if (dt > 0) dsStep(g, dt, el, I); dsDraw(g, I, w, h, el); } }
 ];
 let tr = null, trSel = 'balloon';
 const trBest = () => store.get('bs_pc_trbest') || {};
@@ -1005,7 +1060,7 @@ function trEnd() {
   const recs = store.get('bs_pc_train') || []; recs.push({ t: new Date().toISOString(), game: G.id, pts, avgF, dur: tr.dur, sit, sitName: sitName() }); store.set('bs_pc_train', recs.slice(-600));
   bsTrain(G.id, pts, avgF, tr.dur, source === 'demo');
   const best = trBest(); const prev = best[G.id]; if (prev === undefined || pts > prev) { best[G.id] = pts; store.set('bs_pc_trbest', best); }
-  if (tr.contest) { ctAdd(G.id, pts); bsSubmit(tr, G.id, pts); } tr.phase = 'result'; tr.pts = pts; tr.prev = prev; tr.win = tr.g.pos > 0 || (tr.g.me > tr.g.rv); $('trStart').textContent = tr.id === 'car' ? '차 고르고 다시 하기' : '다시 하기'; const earn = ($('fast').checked && !tr.contest) ? 0 : Math.round(pts * .5) + (tr.win ? 20 : 0); if (earn) store.set('bs_pc_coins', coins() + earn); $('trMsg').textContent = (tr.contest ? `대회 도전을 마쳤어요 🏆 (${ctTries(G.id)}/${CT_MAX}회)` : '기록이 저장됐어요 ✔') + (earn ? ` · +${earn}코인 (보유 ${coins()})` : ' · 연습 모드는 코인이 없어요'); trRender(); if (typeof renderTrainLog === 'function') renderTrainLog(); }
+  if (tr.contest) { ctAdd(G.id, pts); bsSubmit(tr, G.id, pts); } tr.phase = 'result'; tr.pts = pts; tr.prev = prev; tr.win = tr.id === 'tug' ? tr.g.finish !== null && tr.g.rv.every(r => r.t === null || r.t > tr.g.finish) : tr.g.me > tr.g.rv; $('trStart').textContent = tr.id === 'car' ? '차 고르고 다시 하기' : '다시 하기'; const earn = ($('fast').checked && !tr.contest) ? 0 : Math.round(pts * .5) + (tr.win ? 20 : 0); if (earn) store.set('bs_pc_coins', coins() + earn); $('trMsg').textContent = (tr.contest ? `대회 도전을 마쳤어요 🏆 (${ctTries(G.id)}/${CT_MAX}회)` : '기록이 저장됐어요 ✔') + (earn ? ` · +${earn}코인 (보유 ${coins()})` : ' · 연습 모드는 코인이 없어요'); trRender(); if (typeof renderTrainLog === 'function') renderTrainLog(); }
 function erf(x) { const t = 1 / (1 + .3275911 * Math.abs(x)), y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - .284496736) * t + .254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; }
 const phi = z => .5 * (1 + erf(z / Math.SQRT2));
 const topPct = (game, pts) => { const [m, sd] = REF[game] || [50, 15]; return Math.max(1, Math.min(99, Math.round(100 - 100 * phi((pts - m) / sd)))); };
