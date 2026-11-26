@@ -80,6 +80,8 @@
     <div class="row" style="margin-bottom:10px"><span class="msg" id="msg"></span></div>
     <div class="card"><div class="scroll" id="list"></div></div>
     <div class="card" id="detail" hidden></div>
+    <div class="card"><h3>대회 설정</h3><label class="chk"><input type="checkbox" id="demoOk"><span><b>시험용: 데모 모드 점수도 대회 순위에 올리기.</b> 실제 대회에서는 반드시 꺼 두세요.</span></label><span class="msg" id="setMsg"></span></div>
+    <div class="card"><div class="row" style="justify-content:space-between"><h3 id="iqTitle">홈페이지 문의</h3></div><div class="scroll" id="inquiries"></div></div>
   </div>
 </div>
 <script>
@@ -143,7 +145,8 @@ async function act(fn, args, done) { say('msg', '처리 중…'); try { const r 
 async function view(id) { const s = by('students', id), box = $('detail'); shown = id; box.hidden = false; box.innerHTML = '<div class="empty">불러오는 중…</div>';
   try { const r = await bsRpc('bs_admin_student', { p_pass: pw, p_id: id }); if (!r.ok) throw 0; if (shown !== id) return;
     const table = (h, rows) => rows.length ? '<div class="scroll"><table><tr>' + h.map(x => `<th>${x}</th>`).join('') + '</tr>' + rows.map(v => '<tr>' + v.map(c => `<td>${c}</td>`).join('') + '</tr>').join('') + '</table></div>' : '<div class="empty">기록이 없어요.</div>';
-    box.innerHTML = `<h2>${esc(s.nick)} 회원 기록</h2><h3 style="margin-top:14px">대회 기록</h3>` + table(['때', '종목', '점수'], r.contest.map(x => [when(x.at), esc(GN[x.game] || x.game), x.points + '점']))
+    const cs = r.consent, how = { paper: '보호자 서면', self: '본인(14세 이상)', test: '절차 이전 시험 자료' };
+    box.innerHTML = `<h2>${esc(s.nick)} 회원 기록</h2>${cs ? `<p class="hint">동의: ${esc(how[cs.method] || cs.method)} · ${when(cs.at)}${cs.by ? ' · 확인 ' + esc(cs.by) : ''} · 순위 공개 ${cs.rank ? '동의' : '미동의'}</p>` : ''}<h3 style="margin-top:14px">대회 기록</h3>` + table(['때', '종목', '점수'], r.contest.map(x => [when(x.at), esc(GN[x.game] || x.game), x.points + '점']))
       + '<h3 style="margin-top:18px">훈련 기록 (대회 도전 포함)</h3>' + table(['때', '종목', '점수', '평균 집중', '시간', '구분'], r.train.map(x => [when(x.at), esc(GN[x.game] || x.game), x.points + '점', x.avg_focus + '%', x.dur + '초', x.demo ? '데모' : '실기기']));
     box.scrollIntoView({ block: 'nearest' }); } catch { box.innerHTML = '<div class="empty">기록을 불러오지 못했어요.</div>'; } }
 $('main').onclick = e => { const b = e.target.closest('button'); if (!b) return; const x = b.dataset;
@@ -167,7 +170,7 @@ $('q').oninput = () => render();
 $('list').onchange = e => { const s = e.target.closest('[data-assign]'); if (s) act('bs_admin_assign_trainer', { p_trainer: s.dataset.assign, p_center: s.value || null }, '소속 훈련장을 바꿨어요.'); };
 $('clear').addEventListener('click', () => { only = null; render(); });
 $('login').onsubmit = async e => { e.preventDefault(); pw = $('pw').value; if (!pw) return say('inMsg', '비밀번호를 입력해 주세요.', 'bad'); $('inBtn').disabled = true; say('inMsg', '확인 중…');
-  try { const r = await load(); if (!r.ok) say('inMsg', r.msg, 'bad'); else { $('login').hidden = true; $('main').hidden = false; $('pw').value = ''; say('inMsg', ''); } } catch { say('inMsg', NET, 'bad'); } $('inBtn').disabled = false; };
+  try { const r = await load(); if (!r.ok) say('inMsg', r.msg, 'bad'); else { $('login').hidden = true; $('main').hidden = false; $('pw').value = ''; say('inMsg', ''); loadExtra(); } } catch { say('inMsg', NET, 'bad'); } $('inBtn').disabled = false; };
 const pwClose = () => { $('pwForm').reset(); $('pwForm').hidden = true; say('pwMsg', ''); };
 $('pwOpen').onclick = () => { $('pwForm').hidden = false; $('pwOld').focus(); };
 $('pwCancel').onclick = pwClose;
@@ -175,8 +178,17 @@ $('pwForm').onsubmit = async e => { e.preventDefault(); const o = $('pwOld').val
   if (!o) return say('pwMsg', '지금 비밀번호를 입력해 주세요.', 'bad'); if (n.length < 8) return say('pwMsg', '새 비밀번호는 8자 이상으로 해 주세요.', 'bad'); if (n !== $('pwNew2').value) return say('pwMsg', '새 비밀번호 두 칸이 서로 달라요.', 'bad');
   $('pwSave').disabled = true; say('pwMsg', '변경 중…');
   try { const r = await bsRpc('bs_admin_change_password', { p_old: o, p_new: n }); if (!r.ok) say('pwMsg', r.msg, 'bad'); else { pw = n; pwClose(); say('msg', '비밀번호를 변경했어요 ✔', 'ok'); } } catch { say('pwMsg', NET, 'bad'); } $('pwSave').disabled = false; };
-$('re').onclick = () => act('bs_admin_overview', {}, '새로 불러왔어요.');
-$('out').onclick = () => { pwClose(); pw = ''; D = null; only = shown = null; $('main').hidden = true; $('detail').hidden = true; $('login').hidden = false; $('list').innerHTML = $('detail').innerHTML = $('stats').innerHTML = ''; };
+async function loadExtra() {
+  try { const s = await bsRpc('bs_admin_settings', { p_pass: pw, p_allow_demo: null }); if (s.ok) $('demoOk').checked = s.allow_demo;
+    const r = await bsRpc('bs_admin_inquiries', { p_pass: pw }); if (!r.ok) throw 0; const n = r.inquiries.filter(x => !x.done).length;
+    $('iqTitle').textContent = `홈페이지 문의 · 처리 전 ${n}건`;
+    $('inquiries').innerHTML = r.inquiries.length ? '<table><tr><th>때</th><th>학교·기관 / 성함</th><th>연락처</th><th>내용</th><th>처리</th></tr>' + r.inquiries.map(x => `<tr><td>${when(x.at)}</td><td><b>${esc(x.org)}</b><br><span class="hint">${esc(x.name)}</span></td><td>${esc(x.contact)}</td><td style="white-space:pre-wrap;min-width:240px">${esc(x.track)}${x.who ? ' · ' + esc(x.who) : ''}${x.msg ? '\n' + esc(x.msg) : ''}</td><td><button class="btn sm${x.done ? '' : ' pri'}" data-iq="${esc(x.id)}" data-a="${x.done ? 'open' : 'done'}">${x.done ? '다시 열기' : '처리 완료'}</button> <button class="btn sm" data-iq="${esc(x.id)}" data-a="delete">삭제</button></td></tr>`).join('') + '</table>' : '<div class="empty">들어온 문의가 없어요.</div>';
+  } catch { $('inquiries').innerHTML = '<div class="empty">문의를 불러오지 못했어요. 8번 SQL 실행 여부를 확인해 주세요.</div>'; } }
+$('inquiries').addEventListener('click', async e => { const b = e.target.closest('[data-iq]'); if (!b) return; e.stopPropagation(); if (b.dataset.a === 'delete' && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = '정말 삭제?'; return; } b.disabled = true;
+  try { const r = await bsRpc('bs_admin_inquiry', { p_pass: pw, p_id: b.dataset.iq, p_action: b.dataset.a }); if (!r.ok) say('msg', r.msg, 'bad'); await loadExtra(); } catch { say('msg', NET, 'bad'); b.disabled = false; } });
+$('demoOk').onchange = async () => { try { const r = await bsRpc('bs_admin_settings', { p_pass: pw, p_allow_demo: $('demoOk').checked }); if (!r.ok) throw 0; $('demoOk').checked = r.allow_demo; say('setMsg', r.allow_demo ? '데모 점수가 순위에 올라가요 (시험용).' : '실기기 점수만 순위에 올라가요.', 'ok'); } catch { $('demoOk').checked = !$('demoOk').checked; say('setMsg', NET, 'bad'); } };
+$('re').onclick = () => { act('bs_admin_overview', {}, '새로 불러왔어요.'); loadExtra(); };
+$('out').onclick = () => { pwClose(); pw = ''; D = null; only = shown = null; $('main').hidden = true; $('detail').hidden = true; $('login').hidden = false; $('list').innerHTML = $('detail').innerHTML = $('stats').innerHTML = $('inquiries').innerHTML = ''; say('setMsg', ''); };
 </script>
 </body>
 </html>

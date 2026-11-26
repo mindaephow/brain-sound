@@ -86,7 +86,7 @@
         <label class="f">학교 선택<select id="tcSchool"></select></label>
         <label class="f">또는 학교 코드 입력<small>선택 대신 코드를 직접 넣을 수 있어요</small><input type="text" id="tcCode" placeholder="SCH-XXXXXX" maxlength="10" style="text-transform:uppercase"></label>
         <label class="f">담당 분야<select id="tcRole"><option>과학</option><option>정보·코딩</option><option>영재반</option><option>방과후</option><option>담임</option><option>기타</option></select></label>
-        <div class="full"><label class="chk"><input type="checkbox" id="tcAgree"><span>교사 정보(이름·이메일)를 담당 확인과 안내 목적으로 수집하는 것에 동의해요. 학생 뇌파 기록은 <b>내 학교·반 학생만</b> 볼 수 있고, 외부에 공개하지 않아요.</span></label></div>
+        <div class="full"><label class="chk"><input type="checkbox" id="tcAgree"><span>교사 정보(이름·이메일)를 담당 확인과 안내 목적으로 수집하는 것에 동의해요. (<a href="brainsound-privacy.html" target="_blank" style="color:var(--cyan)">처리방침</a>) 학생 뇌파 기록은 <b>내 학교·반 학생만</b> 볼 수 있고, 외부에 공개하지 않아요.</span></label></div>
       </div>
       <div class="row" style="margin-top:18px"><button class="btn pri" id="tcGo">담당 신청하기</button><span class="msg" id="tcMsg"></span></div>
     </div>
@@ -107,24 +107,41 @@
       <div id="clCode" class="codebox" hidden><div class="hint">반 코드 (학생에게 알려 주세요)</div><div class="code" id="clCodeV"></div></div>
     </div>
     <div class="card"><h3>만든 반</h3><div id="clList"></div></div>
+    <div class="card"><h3>대회 대표 (학교 대항전)</h3><p class="hint" style="margin:0 0 12px">위의 <b>담당 교사</b>를 고르고 종목을 선택하면 우리 학교 학생과 이번 주 점수가 나와요. 최대 5명을 고르세요. 고르지 않고 저장하면 점수 상위 5명이 자동으로 반영돼요.</p>
+      <div class="row"><label class="f" style="min-width:220px">종목<select id="rpGame"></select></label><button type="button" class="btn" id="rpLoad">학생 불러오기</button><button type="button" class="btn pri" id="rpSave" disabled>대표 저장</button><span class="msg" id="rpMsg"></span></div>
+      <div id="rpList" style="overflow-x:auto;margin-top:12px"></div></div>
+    <div class="card"><h3>만 14세 미만 아이 등록 (보호자 동의서를 받은 경우)</h3>
+      <p class="hint" style="margin:0 0 12px"><a href="brainsound-consent.html" target="_blank" style="color:var(--cyan)">법정대리인 동의서(인쇄)</a>를 보호자에게 드리고 <b>서명을 받은 뒤</b> 등록하세요. 나온 <b>입장 코드</b>를 아이에게 주면 등록 화면의 학생 입장에서 한 번 쓸 수 있어요. 동의서 원본은 선생님이 보관합니다.</p>
+      <div class="form"><label class="f">반<select id="tc2Class"></select></label><label class="f">아이 닉네임 (실명 아님)<input type="text" id="tc2Nick" maxlength="12"></label><label class="f">나이(만)<input type="number" id="tc2Age" min="6" max="13"></label>
+        <div class="full"><label class="chk"><input type="checkbox" id="tc2Rank"><span>동의서에 <b>③ 대회 순위 공개</b>가 "동의함"으로 표시돼 있어요.</span></label></div>
+        <div class="full"><label class="chk"><input type="checkbox" id="tc2Got"><span><b>보호자가 서명한 동의서</b>(필수 ①②에 동의)를 받아 보관합니다.</span></label></div></div>
+      <div class="row" style="margin-top:14px"><button type="button" class="btn pri" id="tc2Go">아이 등록하기</button><span class="msg" id="tc2Msg"></span></div>
+      <div id="tc2Box" class="codebox" hidden><div class="hint">입장 코드 (아이에게 알려 주세요. 지금만 보여요)</div><div class="code" id="tc2Code" style="font-size:30px;font-weight:900;letter-spacing:.14em;color:var(--cyan)"></div></div></div>
   </section>
 
   <!-- 4. 학생 -->
   <section id="p-student" hidden>
     <div class="card">
-      <h2>4. 학생 반 입장</h2><p class="hint" style="margin:0 0 16px">학생이 선생님(교사·트레이너)께 받은 <b>반 코드</b>로 들어와요. 이름은 받지 않고 <b>닉네임</b>만 써요. 14세 미만은 보호자 동의가 필요해요.</p>
+      <h2>4. 학생 반 입장</h2><p class="hint" style="margin:0 0 16px">이름은 받지 않고 <b>닉네임</b>만 써요. 내용은 <a href="brainsound-privacy.html" target="_blank" style="color:var(--cyan)">개인정보 처리방침</a>에서 볼 수 있어요.</p>
+      <h3 style="margin-top:4px">만 14세 이상</h3>
       <div class="form">
         <label class="f">닉네임<input type="text" id="stNick" maxlength="12" placeholder="예: 번개손"></label>
-        <label class="f">나이(만)<input type="number" id="stAge" min="6" max="19" placeholder="예: 11"></label>
+        <label class="f">나이(만)<input type="number" id="stAge" min="14" max="19" placeholder="예: 15"></label>
         <label class="f full">반 코드<input type="text" id="stCode" placeholder="CLS-XXXXXX" maxlength="10" style="text-transform:uppercase"></label>
-        <div class="full" id="stGuardBox" hidden><label class="chk"><input type="checkbox" id="stGuard"><span><b>보호자 동의</b> — 만 14세 미만이에요. 보호자가 닉네임·나이·훈련 기록을 서버에 저장하고 담당 선생님(교사·트레이너)과 본사가 보는 것에 동의했어요.</span></label></div>
+        <div class="full"><label class="chk"><input type="checkbox" id="stAgree"><span><b>[필수]</b> 개인정보 수집·이용에 동의해요. (닉네임·나이·소속 반 / 회원 구분과 지도 / [보유 기간은 처리방침 참고])</span></label></div>
+        <div class="full"><label class="chk"><input type="checkbox" id="stTrain"><span><b>[필수]</b> 훈련·대회 기록(점수, 뇌파에서 계산한 집중 값, 시간) 저장에 동의해요. 본사와 담당 선생님(교사·트레이너), 트레이너의 훈련장이 볼 수 있어요.</span></label></div>
+        <div class="full"><label class="chk"><input type="checkbox" id="stRank"><span><b>[선택]</b> 대회 순위에 닉네임·소속·점수가 <b>누구에게나 공개</b>되는 것에 동의해요. 동의하지 않아도 훈련과 도전은 할 수 있어요.</span></label></div>
       </div>
       <div class="row" style="margin-top:18px"><button class="btn pri" id="stGo">반에 들어가기</button><span class="msg" id="stMsg"></span></div>
+      <h3 style="margin-top:26px">만 14세 미만</h3>
+      <p class="hint" style="margin:0 0 12px">혼자 가입할 수 없어요. 보호자가 <a href="brainsound-consent.html" target="_blank" style="color:var(--cyan)">법정대리인 동의서(인쇄)</a>에 서명해 선생님께 내면, 선생님이 <b>입장 코드</b>를 줘요.</p>
+      <div class="form"><label class="f full">입장 코드<input type="text" id="enCode" placeholder="ENT-XXXXXX" maxlength="10" style="text-transform:uppercase"></label></div>
+      <div class="row" style="margin-top:14px"><button class="btn" id="enGo">입장 코드로 들어가기</button><span class="msg" id="enMsg"></span></div>
     </div>
     <div class="card"><h3>이 컴퓨터에 입장한 학생</h3><div id="stList"></div></div>
   </section>
 
-  <footer>브레인 사운드 · 집중 훈련과 체험을 위한 서비스이며 의료기기가 아닙니다. 학생의 이름·연락처는 받지 않습니다.</footer>
+  <footer>브레인 사운드 · 집중 훈련과 체험을 위한 서비스이며 의료기기가 아닙니다. 학생의 이름·연락처는 받지 않습니다. · <a href="brainsound-privacy.html" target="_blank" style="color:var(--cyan)">개인정보 처리방침</a></footer>
 </div>
 
 <script>
@@ -154,9 +171,14 @@ function render() {
   $('tcList').innerHTML = mine.length ? '<table><tr><th>교사</th><th>학교</th><th>상태</th></tr>' + mine.map(t => `<tr><td><b>${esc(t.name)}</b></td><td>${esc(t.school)}</td><td>${t.status === '승인' ? '<span class="tag ok">승인됨</span>' : t.status === '거절' ? '<span class="tag wait">거절됨</span>' : '<span class="tag wait">승인 대기</span>'}</td></tr>`).join('') + '</table>' : '<div class="empty">이 브라우저에서 신청한 교사가 없어요.</div>';
   const ok = mine.filter(t => t.status === '승인'), ct = $('clTeacher').value;
   $('clTeacher').innerHTML = ok.length ? ok.map(t => `<option value="${esc(t.key)}">${esc(t.name)} · ${esc(t.school)}</option>`).join('') : '<option value="">승인된 교사가 없어요</option>'; if (ok.some(t => t.key === ct)) $('clTeacher').value = ct;
+  const tk = $('clTeacher').value, own = (mine.find(t => t.key === tk) || {}).classes || [], was = $('tc2Class').value;
+  $('tc2Class').innerHTML = own.length ? own.map(c => `<option value="${esc(c.code)}">${esc(c.name)}</option>`).join('') : '<option value="">승인된 교사의 반이 없어요</option>'; if (own.some(c => c.code === was)) $('tc2Class').value = was;
   $('clList').innerHTML = classes.length ? '<table><tr><th>반</th><th>학교 · 담당</th><th>반 코드</th><th>학생</th></tr>' + classes.map(c => `<tr><td><b>${esc(c.name)}</b><br><span class="hint">${c.year}학년도${c.headcount ? ' · 예상 ' + c.headcount + '명' : ''}</span></td><td>${esc(c.school)}<br><span class="hint">${esc(c.teacher)}</span></td><td class="mono">${esc(c.code)}</td><td>${c.students}명</td></tr>`).join('') + '</table>' : '<div class="empty">아직 만든 반이 없어요.</div>';
-  $('stList').innerHTML = st ? `<div class="row"><span class="tag ok">${esc(st.nick)}</span><span class="hint">${esc(st.cls)} · 대회 점수가 이 닉네임으로 올라가요.</span><button class="btn sm" id="stOut">나가기</button></div>` : '<div class="empty">아직 입장한 학생이 없어요.</div>';
+  $('stList').innerHTML = st ? `<div class="row"><span class="tag ok">${esc(st.nick)}</span><span class="hint">${esc(st.cls)} · 대회 점수가 이 닉네임으로 올라가요.</span><button class="btn sm" id="stOut">나가기</button><button class="btn sm" id="stDel">동의 철회하고 기록 삭제</button></div>` : '<div class="empty">아직 입장한 학생이 없어요.</div>';
   if (st) $('stOut').onclick = () => { put('bs_student', null); say('stMsg', '이 컴퓨터에서 나갔어요.'); render(); };
+  // 삭제는 되돌릴 수 없어서 두 번 눌러야 실행
+  if (st) $('stDel').onclick = async e => { const b = e.target; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = '정말 삭제? 기록이 모두 지워져요'; return; } b.disabled = true;
+    try { const r = await bsRpc('bs_withdraw', { p_key: st.key }); if (!r.ok) say('stMsg', r.msg, 'bad'); else { put('bs_student', null); say('stMsg', '동의를 철회하고 내 정보와 기록을 삭제했어요.', 'ok'); } } catch { say('stMsg', NET, 'bad'); } render(); };
 }
 async function loadSchools() { try { schools = await bsRpc('bs_list_schools'); } catch { schools = null; } render(); }
 async function loadMine() { try { mine = (await Promise.all(keys().map(async k => { const r = await bsRpc('bs_teacher_info', { p_key: k }); return r && { ...r, key: k }; }))).filter(Boolean); render(); return true; } catch { render(); return false; } }
@@ -180,19 +202,33 @@ $('tcGo').onclick = () => { const name = $('tcName').value.trim(), mail = $('tcM
     const kept = put('bs_teacher_keys', [...keys(), r.teacher_key]); say('tcMsg', kept ? '담당 신청이 접수됐어요. 승인 대기 중이에요.' : '신청은 접수됐지만 이 브라우저에 저장하지 못했어요.', kept ? 'ok' : 'bad'); $('tcName').value = $('tcMail').value = $('tcCode').value = ''; $('tcAgree').checked = false; await loadMine(); }); };
 $('tcRe').onclick = () => send('tcRe', 'tcMsg', async () => { if (!await loadMine()) throw 0; say('tcMsg', '새로 불러왔어요.', 'ok'); });
 
+[['balloon', '풍선 띄우기'], ['car', '자동차 경주'], ['puzzle', '퍼즐 맞추기'], ['dragon', '드래곤 마을 지키기'], ['candle', '촛불 끄기'], ['flower', '꽃 피우기'], ['axe', '도끼 던지기'], ['archery', '양궁'], ['balance', '좌우 균형'], ['tug', '뇌파 줄다리기']].forEach(g => $('rpGame').add(new Option(g[1], g[0])));
+let rp = null;   // 불러온 목록의 { key, game }
+const rpClear = () => { rp = null; $('rpList').innerHTML = ''; $('rpSave').disabled = true; say('rpMsg', ''); };
+async function rpFill() { const k = $('clTeacher').value, g = $('rpGame').value; const r = await bsRpc('bs_teacher_reps', { p_key: k, p_game: g }); if (!r.ok) return say('rpMsg', r.msg, 'bad'); rp = { key: k, game: g };
+  $('rpList').innerHTML = r.students.length ? '<table><tr><th>대표</th><th>닉네임</th><th>반</th><th>이번 주 최고</th></tr>' + r.students.map(s => `<tr><td><input type="checkbox" value="${esc(s.id)}" aria-label="${esc(s.nick)} 대표"${s.rep ? ' checked' : ''}${s.rank_public ? '' : ' disabled'}></td><td>${esc(s.nick)}${s.rank_public ? '' : ' <span class="hint">(순위 공개 미동의)</span>'}</td><td>${esc(s.cls)}</td><td>${s.best === null ? '-' : s.best + '점'}</td></tr>`).join('') + '</table>' : '<div class="empty">우리 학교에 들어온 학생이 아직 없어요.</div>'; $('rpSave').disabled = !r.students.length; return true; }
+$('rpLoad').onclick = () => { rpClear(); if (!$('clTeacher').value) return say('rpMsg', '승인된 교사가 있어야 해요.', 'bad'); send('rpLoad', 'rpMsg', async () => { if (await rpFill()) say('rpMsg', ''); }); };
+$('rpList').onchange = e => { if ($('rpList').querySelectorAll('input:checked').length > 5) { e.target.checked = false; say('rpMsg', '대표는 5명까지예요.', 'bad'); } else say('rpMsg', ''); };
+$('rpSave').onclick = () => { if (!rp) return; const ids = [...$('rpList').querySelectorAll('input:checked')].map(x => x.value); send('rpSave', 'rpMsg', async () => { const r = await bsRpc('bs_teacher_set_reps', { p_key: rp.key, p_game: rp.game, p_ids: ids }); if (!r.ok) return say('rpMsg', r.msg, 'bad'); await rpFill(); say('rpMsg', ids.length ? `대표 ${ids.length}명을 저장했어요 ✔` : '대표 선택을 비웠어요. 상위 5명이 반영돼요.', 'ok'); }); };
+$('rpGame').onchange = rpClear;
+$('clTeacher').onchange = () => { rpClear(); render(); };
 $('clGo').onclick = () => { const k = $('clTeacher').value, name = $('clName').value.trim(); $('clCode').hidden = true;
   if (!k) return say('clMsg', '승인된 교사가 있어야 반을 만들 수 있어요.', 'bad'); if (!name) return say('clMsg', '반 이름을 입력해 주세요.', 'bad');
   send('clGo', 'clMsg', async () => { const r = await bsRpc('bs_create_class', { p_key: k, p_year: parseInt($('clYear').value, 10) || null, p_name: name, p_headcount: parseInt($('clN').value, 10) || null }); if (!r.ok) return say('clMsg', r.msg, 'bad');
     $('clCode').hidden = false; $('clCodeV').textContent = r.code; say('clMsg', '반이 만들어졌어요 ✔', 'ok'); $('clName').value = ''; await loadMine(); }); };
 
-$('stAge').oninput = () => { $('stGuardBox').hidden = !($('stAge').value && +$('stAge').value < 14); };
 $('stGo').onclick = () => { const nick = $('stNick').value.trim(), age = parseInt($('stAge').value, 10), code = $('stCode').value.trim().toUpperCase();
-  if (nick.length < 2) return say('stMsg', '닉네임을 2자 이상 입력해 주세요.', 'bad'); if (!age || age < 6 || age > 19) return say('stMsg', '나이를 입력해 주세요.', 'bad');
-  if (!code) return say('stMsg', '반 코드를 입력해 주세요.', 'bad'); if (age < 14 && !$('stGuard').checked) return say('stMsg', '만 14세 미만은 보호자 동의가 필요해요.', 'bad');
-  send('stGo', 'stMsg', async () => { const r = await bsRpc('bs_join_class', { p_nick: nick, p_age: age, p_code: code, p_guardian: age < 14 && $('stGuard').checked }); if (!r.ok) return say('stMsg', r.msg, 'bad');
-    const kept = put('bs_student', { key: r.student_key, nick, cls: r.class }); say('stMsg', kept ? `${r.class}에 들어왔어요 🎉` : '이 브라우저에 저장하지 못해 점수를 올릴 수 없어요.', kept ? 'ok' : 'bad'); $('stNick').value = ''; render(); }); };
-// 회원 정보 동기화: 관리자가 닉네임을 바꾸거나 삭제하면 이 브라우저에도 반영
-async function bsSync() { const st = bsGet('bs_student'); if (!st) return null; try { const m = await bsRpc('bs_me', { p_key: st.key }); const now = bsGet('bs_student'); if (!now || now.key !== st.key) return now; if (!m) { localStorage.removeItem('bs_student'); return null; } const nx = { key: st.key, nick: m.nick, cls: m.cls, school: m.school }; localStorage.setItem('bs_student', JSON.stringify(nx)); return nx; } catch { return st; } }
+  if (!age || age > 19) return say('stMsg', '나이를 입력해 주세요.', 'bad'); if (age < 14) return say('stMsg', '만 14세 미만은 아래의 입장 코드로 들어와 주세요.', 'bad');
+  if (nick.length < 2) return say('stMsg', '닉네임을 2자 이상 입력해 주세요.', 'bad'); if (!code) return say('stMsg', '반 코드를 입력해 주세요.', 'bad'); if (!$('stAgree').checked || !$('stTrain').checked) return say('stMsg', '필수 동의에 체크해 주세요.', 'bad');
+  send('stGo', 'stMsg', async () => { const r = await bsRpc('bs_join_class', { p_nick: nick, p_age: age, p_code: code, p_agree: true, p_train: true, p_rank: $('stRank').checked }); if (!r.ok) return say('stMsg', r.msg, 'bad');
+    const kept = put('bs_student', { key: r.student_key, nick, cls: r.class }); say('stMsg', kept ? `${r.class}에 들어왔어요 🎉` : '이 브라우저에 저장하지 못해 점수를 올릴 수 없어요.', kept ? 'ok' : 'bad'); $('stNick').value = ''; $('stAgree').checked = $('stTrain').checked = $('stRank').checked = false; render(); }); };
+$('enGo').onclick = () => { const code = $('enCode').value.trim().toUpperCase(); if (!code) return say('enMsg', '입장 코드를 입력해 주세요.', 'bad');
+  try { localStorage.setItem('bs_check', '1'); localStorage.removeItem('bs_check'); } catch { return say('enMsg', '이 브라우저는 저장이 안 돼요. 코드는 쓰지 않았어요. 다른 브라우저에서 해 주세요.', 'bad'); }
+  send('enGo', 'enMsg', async () => { const r = await bsRpc('bs_enter', { p_code: code }); if (!r.ok) return say('enMsg', r.msg, 'bad'); put('bs_student', { key: r.student_key, nick: r.nick, cls: r.class }); say('enMsg', `${r.class}에 들어왔어요 🎉`, 'ok'); $('enCode').value = ''; render(); }); };
+$('tc2Go').onclick = () => { const cls = $('tc2Class').value, nick = $('tc2Nick').value.trim(), age = parseInt($('tc2Age').value, 10); $('tc2Box').hidden = true;
+  if (!cls) return say('tc2Msg', '반을 먼저 만들어 주세요.', 'bad'); if (nick.length < 2) return say('tc2Msg', '닉네임을 2자 이상 입력해 주세요.', 'bad'); if (!age || age < 6 || age > 13) return say('tc2Msg', '만 6~13세를 입력해 주세요.', 'bad'); if (!$('tc2Got').checked) return say('tc2Msg', '서명한 동의서를 받았는지 확인에 체크해 주세요.', 'bad');
+  send('tc2Go', 'tc2Msg', async () => { const r = await bsRpc('bs_teacher_add_child', { p_key: $('clTeacher').value, p_class_code: cls, p_nick: nick, p_age: age, p_rank: $('tc2Rank').checked, p_received: true }); if (!r.ok) return say('tc2Msg', r.msg, 'bad');
+    $('tc2Box').hidden = false; $('tc2Code').textContent = r.enter_code; say('tc2Msg', '등록됐어요 ✔', 'ok'); $('tc2Nick').value = $('tc2Age').value = ''; $('tc2Rank').checked = $('tc2Got').checked = false; await loadMine(); }); };
 render(); loadSchools(); loadMine(); bsSync().then(render);
 </script>
 </body>

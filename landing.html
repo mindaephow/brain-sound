@@ -392,14 +392,15 @@
     <label>연락처 (이메일 또는 전화)<input name="contact" required></label>
     <label>관심 있는 제품<select name="track"><option>브레인 메이커스 유선 버전</option><option>브레인 메이커스 무선 버전</option><option>브레인 밴드 (출시 알림)</option><option>앱 출시 알림 (PC · 안드로이드 · 아이폰)</option><option>수업 문의 (하루 체험)</option><option>수업 문의 (학기 과정)</option><option>잘 모르겠어요</option></select></label>
     <label>대상 학년 / 인원<input name="who" placeholder="예: 중1 2개 반, 약 50명"></label>
-    <label>문의 내용<textarea name="msg"></textarea></label>
+    <label>문의 내용<textarea name="msg" maxlength="2000"></textarea></label>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400"><input type="checkbox" name="agree" required style="width:auto;margin-top:5px"><span>[필수] 문의에 답하기 위해 학교/기관명·성함·연락처·문의 내용을 수집하고 처리 후 [보유 기간은 처리방침 참고] 보관하는 것에 동의해요. (<a href="brainsound-privacy.html" target="_blank" style="color:inherit;text-decoration:underline">처리방침</a>)</span></label>
     <button class="btn" type="submit" style="justify-content:center">문의 보내기</button>
     <div id="sent">접수됐어요. 곧 연락드리겠습니다.</div>
   </form>
-  <p class="note" id="setup">⚠ 문의 폼은 아직 연결 전입니다. 파일 안 FORM_URL에 구글폼 주소를 넣으면 작동합니다.</p>
+  <p class="note" id="fMsg" role="status" hidden></p>
 </div></section>
 
-<footer><div class="w">BRAIN SOUND · 뇌파를 연구하는 회사 · 나의 뇌에 맞는 집중 사운드를 찾아주는 · <a href="brainsound-trainer.html" style="color:inherit;text-decoration:underline">트레이너</a> · <a href="brainsound-center.html" style="color:inherit;text-decoration:underline">훈련장</a></div></footer>
+<footer><div class="w">BRAIN SOUND · 뇌파를 연구하는 회사 · 나의 뇌에 맞는 집중 사운드를 찾아주는 · <a href="brainsound-trainer.html" style="color:inherit;text-decoration:underline">트레이너</a> · <a href="brainsound-privacy.html" style="color:inherit;text-decoration:underline;font-weight:700">개인정보 처리방침</a> · <a href="brainsound-center.html" style="color:inherit;text-decoration:underline">훈련장</a></div></footer>
 
 <script>
 // 미리보기 화면에서도 #링크가 동작하도록 직접 스크롤
@@ -409,15 +410,19 @@ document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click
 }));
 
 // 문의 연결: 구글폼 등의 formResponse 주소를 넣으세요
-const FORM_URL = '';
+// 서버(Supabase). 공개용 키만 사용하고, 테이블에는 직접 접근하지 않고 bs_ 함수만 호출한다.
+const BS_URL = 'https://brfeszcyjsaprbakqsjl.supabase.co', BS_KEY = 'sb_publishable_0Nsga8WVTqBcBS6kcUytrg_UB-1FtnK';
+async function bsRpc(fn, args) { const r = await fetch(BS_URL + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: BS_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}), signal: AbortSignal.timeout(10000) }); if (!r.ok) throw new Error('server ' + r.status); return r.json(); }
+const bsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
 document.getElementById('f').addEventListener('submit', async e => {
   e.preventDefault();
-  if (!FORM_URL) { alert('아직 문의 받는 곳이 연결되지 않았어요 (관리자 설정 필요).'); return; }
-  const data = Object.fromEntries(new FormData(e.target));
-  try { await fetch(FORM_URL, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(data) }); } catch {}
-  e.target.querySelector('button').style.display = 'none'; document.getElementById('sent').style.display = 'block';
+  const f = e.target, v = Object.fromEntries(new FormData(f)), b = f.querySelector('button'), m = document.getElementById('fMsg');
+  const say = t => { m.textContent = t; m.hidden = !t; };
+  b.disabled = true; say('보내는 중…');
+  try { const r = await bsRpc('bs_send_inquiry', { p_org: v.org, p_name: v.name, p_contact: v.contact, p_track: v.track, p_who: v.who, p_msg: v.msg, p_agree: !!v.agree });
+    if (!r.ok) { say(r.msg); b.disabled = false; } else { say(''); b.style.display = 'none'; document.getElementById('sent').style.display = 'block'; } }
+  catch { say('보내지 못했어요. 잠시 뒤 다시 눌러 주세요.'); b.disabled = false; }
 });
-if (FORM_URL) document.getElementById('setup').style.display = 'none';
 </script>
 <script>
 (function(){

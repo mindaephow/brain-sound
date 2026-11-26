@@ -818,7 +818,7 @@ function trBegin(contest) {
   if (trSel === 'car' && (!ownedKind(myCar.kind) || !ownedCol(myCar.col))) { $('trMsg').textContent = '아직 없는 차(색)예요. 구매하거나, 가지고 있는 것으로 골라 주세요.'; return; }
   if (contest && ctTries(trSel) >= CT_MAX) { $('trMsg').textContent = `이번 주 ${GAMES.find(x => x.id === trSel).n} 대회 기회(${CT_MAX}번)를 다 썼어요. 다음 주 월요일에 다시 열려요.`; return; }
   const G = GAMES.find(x => x.id === trSel), now = performance.now(), dur = ($('fast').checked && !contest) ? Math.max(10, Math.round(G.dur / 3)) : G.dur;
-  tr = { contest: !!contest, id: G.id, phase: 'intro', introUntil: now + 3000, lastNum: 4, t0: now, last: now, dur, lvSum: 0, lvT: 0, g: Object.assign({ pts: 0, dur }, G.init()) }; $('trStart').textContent = '중단'; $('trMsg').textContent = G.d; trRender(); }
+  tr = { contest: !!contest, id: G.id, phase: 'intro', introUntil: now + 3000, lastNum: 4, t0: now, last: now, dur, lvSum: 0, lvT: 0, g: Object.assign({ pts: 0, dur }, G.init()) }; if (contest) tr.ticket = bsStart(G.id, source === 'demo'); $('trStart').textContent = '중단'; $('trMsg').textContent = G.d; trRender(); }
 function trStop() { tr = null; $('trStart').textContent = '훈련 시작'; trRender(); }
 function trEnd() {
   const G = GAMES.find(x => x.id === tr.id), pts = Math.round(cl(tr.g.pts, 0, 100)), avgF = tr.lvT ? Math.round(tr.lvSum / tr.lvT) : 100;
@@ -851,12 +851,15 @@ function trFrame(now) {
 const BS_URL = 'https://brfeszcyjsaprbakqsjl.supabase.co', BS_KEY = 'sb_publishable_0Nsga8WVTqBcBS6kcUytrg_UB-1FtnK';
 async function bsRpc(fn, args) { const r = await fetch(BS_URL + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: BS_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}), signal: AbortSignal.timeout(10000) }); if (!r.ok) throw new Error('server ' + r.status); return r.json(); }
 const bsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
-// 대회 점수를 서버에 올리고 순위를 받아 온다
+// 대회 도전: 시작할 때 서버에서 출전표를 받고, 끝나면 그 출전표로 점수를 낸다
+function bsStart(game, demo) { const st = bsGet('bs_student'); if (!st) return Promise.resolve({ ok: false, msg: '학생 입장 전이라 대회 순위에는 올라가지 않았어요' });
+  return bsRpc('bs_start_contest', { p_key: st.key, p_game: game, p_demo: demo }).catch(() => ({ ok: false, msg: '서버에 연결하지 못해 순위에 올리지 못했어요' })); }
 async function bsSubmit(t, game, pts) {
-  const st = bsGet('bs_student'); if (!st) { t.cMsg = '학생 입장 전이라 대회 순위에는 올라가지 않았어요'; return; }
-  t.cMsg = '서버에 점수를 올리는 중…';
-  try { const r = await bsRpc('bs_submit_score', { p_key: st.key, p_game: game, p_points: pts });
-    if (!r.ok) t.cMsg = r.msg; else { t.cMsg = '점수가 서버에 올라갔어요'; const rows = await bsRpc('bs_ranking', { p_game: game }), me = rows.find(x => x.nick === st.nick && (!st.school || x.school === st.school)); if (me) t.cMsg = `이번 주 ${me.rank}위 / ${rows.length}명`; } }
+  const st = bsGet('bs_student'); t.cMsg = '서버에 점수를 올리는 중…';
+  try { const k = await t.ticket;
+    if (!k || !k.ok) t.cMsg = (k && k.msg) || '순위에 올리지 못했어요';
+    else { const r = await bsRpc('bs_finish_contest', { p_ticket: k.ticket, p_points: pts });
+      if (!r.ok) t.cMsg = r.msg; else { t.cMsg = '점수가 서버에 올라갔어요'; const rows = await bsRpc('bs_ranking', { p_game: game }), me = st && rows.find(x => x.nick === st.nick && (!st.school || x.school === st.school)); if (me) t.cMsg = `이번 주 ${me.rank}위 / ${rows.length}명`; } } }
   catch { if (t.cMsg !== '점수가 서버에 올라갔어요') t.cMsg = '서버에 점수를 올리지 못했어요 (인터넷 확인)'; }
   sendCtState();
 }

@@ -83,7 +83,7 @@
         <label class="f">비밀번호 다시 입력<input type="password" id="apPw2" autocomplete="new-password" class="search"></label>
         <label class="f full">소속 훈련장<select id="apCenter"><option value="">없음 (본사 직속)</option></select></label>
         <label class="f full">소개·경력 (선택)<input type="text" id="apIntro" maxlength="200"></label>
-        <div class="full"><label class="chk"><input type="checkbox" id="apAgree"><span>트레이너 정보(이름·연락처·이메일·지역)를 승인과 안내 목적으로 수집하는 것에 동의해요. 아이들의 기록은 훈련 목적으로만 보고 외부에 공개하지 않겠습니다.</span></label></div>
+        <div class="full"><label class="chk"><input type="checkbox" id="apAgree"><span>트레이너 정보(이름·연락처·이메일·지역)를 승인과 안내 목적으로 수집하는 것에 동의해요. 아이들의 기록은 훈련 목적으로만 보고 외부에 공개하지 않겠습니다. (<a href="brainsound-privacy.html" target="_blank" style="color:var(--cyan)">처리방침</a>)</span></label></div>
       </div>
       <div class="row" style="margin-top:18px"><button class="btn pri" id="apGo">신청하기</button><span class="msg" id="apMsg"></span></div>
     </form>
@@ -114,7 +114,14 @@
         <div class="form"><label class="f">반 이름<input type="text" id="clName" maxlength="30" placeholder="예: 토요 집중반"></label><label class="f">연도<input type="number" id="clYear" min="2025" max="2040"></label><label class="f">예상 인원<input type="number" id="clN" min="1" max="200"></label></div>
         <div class="row" style="margin-top:16px"><button class="btn pri" id="clGo">반 만들기</button><span class="msg" id="clMsg"></span></div>
       </form>
-      <div class="card"><h3>내 반</h3><p class="hint" style="margin:0 0 10px">아이들은 대회 페이지의 <b>학교·교사 등록 → 학생 입장</b>에서 반 코드를 넣고 들어와요.</p><div class="scroll" id="classes"></div></div>
+      <div class="card"><h3>만 14세 미만 아이 등록 (보호자 동의서를 받은 경우)</h3>
+      <p class="hint" style="margin:0 0 12px"><a href="brainsound-consent.html" target="_blank" style="color:var(--cyan)">법정대리인 동의서(인쇄)</a>를 보호자에게 드리고 <b>서명을 받은 뒤</b> 등록하세요. 나온 <b>입장 코드</b>를 아이에게 주면 등록 화면의 학생 입장에서 한 번 쓸 수 있어요. 동의서 원본은 선생님이 보관합니다.</p>
+      <div class="form"><label class="f">반<select id="chClass"></select></label><label class="f">아이 닉네임 (실명 아님)<input type="text" id="chNick" maxlength="12"></label><label class="f">나이(만)<input type="number" id="chAge" min="6" max="13"></label>
+        <div class="full"><label class="chk"><input type="checkbox" id="chRank"><span>동의서에 <b>③ 대회 순위 공개</b>가 "동의함"으로 표시돼 있어요.</span></label></div>
+        <div class="full"><label class="chk"><input type="checkbox" id="chGot"><span><b>보호자가 서명한 동의서</b>(필수 ①②에 동의)를 받아 보관합니다.</span></label></div></div>
+      <div class="row" style="margin-top:14px"><button type="button" class="btn pri" id="chGo">아이 등록하기</button><span class="msg" id="chMsg"></span></div>
+      <div id="chBox" class="codebox" hidden><div class="hint">입장 코드 (아이에게 알려 주세요. 지금만 보여요)</div><div class="code" id="chCode" style="font-size:30px;font-weight:900;letter-spacing:.14em;color:var(--cyan)"></div></div></div>
+      <div class="card"><h3>내 반</h3><p class="hint" style="margin:0 0 10px">만 14세 이상은 <b>학생 입장</b>에서 반 코드로 직접 들어오고, 14세 미만은 위에서 동의서를 받아 등록해 주세요.</p><div class="scroll" id="classes"></div></div>
       <div class="card"><div class="row" style="justify-content:space-between"><h3 id="stTitle">내 아이들</h3><button class="btn sm" id="all" hidden>전체 보기</button></div><div class="scroll" id="students"></div></div>
       <div class="card" id="detail" hidden></div>
     </div>
@@ -139,6 +146,10 @@ const view = a => { $('login').hidden = a; $('apply').hidden = !a; $('vLogin').c
 $('vLogin').onclick = () => view(false); $('vApply').onclick = () => view(true);
 async function send(btn, msg, fn) { $(btn).disabled = true; say(msg, '보내는 중…'); try { await fn(); } catch { say(msg, NET, 'bad'); } $(btn).disabled = false; }
 
+$('chGo').onclick = () => { const cls = $('chClass').value, nick = $('chNick').value.trim(), age = parseInt($('chAge').value, 10); $('chBox').hidden = true;
+  if (!cls) return say('chMsg', '반을 먼저 만들어 주세요.', 'bad'); if (nick.length < 2) return say('chMsg', '닉네임을 2자 이상 입력해 주세요.', 'bad'); if (!age || age < 6 || age > 13) return say('chMsg', '만 6~13세를 입력해 주세요.', 'bad'); if (!$('chGot').checked) return say('chMsg', '서명한 동의서를 받았는지 확인에 체크해 주세요.', 'bad');
+  send('chGo', 'chMsg', async () => { const r = await bsRpc('bs_trainer_add_child', { ...me, p_class_code: cls, p_nick: nick, p_age: age, p_rank: $('chRank').checked, p_received: true }); if (!r.ok) return say('chMsg', r.msg, 'bad');
+    $('chBox').hidden = false; $('chCode').textContent = r.enter_code; say('chMsg', '등록됐어요 ✔', 'ok'); $('chNick').value = $('chAge').value = ''; $('chRank').checked = $('chGot').checked = false; await load(); }); };
 $('apply').onsubmit = e => { e.preventDefault(); const v = id => $(id).value.trim();
   if (v('apName').length < 2) return say('apMsg', '이름을 입력해 주세요.', 'bad'); if (!/^[0-9\- ]{8,20}$/.test(v('apPhone'))) return say('apMsg', '연락처를 숫자로 입력해 주세요.', 'bad');
   if (!v('apGu')) return say('apMsg', '활동 시·군·구를 입력해 주세요.', 'bad'); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v('apMail'))) return say('apMsg', '이메일을 올바르게 입력해 주세요.', 'bad');
@@ -153,6 +164,7 @@ function render() {
   if (only && !D.classes.some(c => c.id === only)) only = null;
   $('stats').innerHTML = [['내 반', D.classes.length], ['내 아이들', D.students.length], ['훈련 기록', D.students.reduce((a, s) => a + s.train, 0)], ['대회 도전', D.students.reduce((a, s) => a + s.contest, 0)]].map(x => `<button type="button"><span>${x[0]}</span><b>${x[1]}</b></button>`).join('');
   $('classes').innerHTML = D.classes.length ? '<table><tr><th>반</th><th>반 코드</th><th>학생</th><th></th></tr>' + D.classes.map(c => `<tr><td><b>${esc(c.name)}</b><br><span class="hint">${c.year}년${c.headcount ? ' · 예상 ' + c.headcount + '명' : ''}</span></td><td class="mono">${esc(c.code)}</td><td><button class="link" data-cls="${esc(c.id)}">${D.students.filter(s => s.class_id === c.id).length}명</button></td><td><button class="btn sm" data-del="class" data-id="${esc(c.id)}">삭제</button></td></tr>`).join('') + '</table>' : '<div class="empty">아직 만든 반이 없어요.</div>';
+  const was = $('chClass').value; $('chClass').innerHTML = D.classes.length ? D.classes.map(c => `<option value="${esc(c.code)}">${esc(c.name)}</option>`).join('') : '<option value="">반을 먼저 만들어 주세요</option>'; if (D.classes.some(c => c.code === was)) $('chClass').value = was;
   const list = D.students.filter(s => !only || s.class_id === only), cn = id => (D.classes.find(c => c.id === id) || {}).name || '?';
   $('stTitle').textContent = only ? `${cn(only)} 아이들` : '내 아이들'; $('all').hidden = !only;
   $('students').innerHTML = list.length ? '<table><tr><th>닉네임</th><th>반</th><th>훈련</th><th>최고 점수</th><th>대회</th><th>마지막 기록</th><th>관리</th></tr>' + list.map(s => `<tr><td><b>${esc(s.nick)}</b><br><span class="hint">${s.age}세${s.guardian ? ' · 보호자 동의' : ''}</span></td><td>${esc(cn(s.class_id))}</td><td>${s.train}회</td><td>${s.best === null ? '-' : s.best + '점'}</td><td>${s.contest}회</td><td>${when(s.last)}</td><td><button class="btn sm pri" data-view="${esc(s.id)}">기록 보기</button> <button class="btn sm" data-ren="${esc(s.id)}">닉네임 수정</button> <button class="btn sm" data-del="student" data-id="${esc(s.id)}">삭제</button></td></tr>`).join('') + '</table>' : '<div class="empty">아직 들어온 아이가 없어요. 반 코드를 알려 주세요.</div>';
@@ -196,7 +208,7 @@ $('phDel').onclick = () => savePhoto(null, '사진을 지웠어요.');
 $('profile').onsubmit = e => { e.preventDefault(); send('pfSave', 'pfMsg', async () => { const r = await bsRpc('bs_trainer_set_profile', { ...me, p_intro: $('pfIntro').value, p_contact: $('pfContact').value, p_public: $('pfPublic').checked, p_show_count: $('pfCount').checked }); if (!r.ok) return say('pfMsg', r.msg, 'bad'); say('pfMsg', '저장했어요 ✔', 'ok'); }); };
 const clearProfile = () => { $('profile').reset(); showPhoto(null); say('pfMsg', ''); say('phMsg', ''); };
 $('re').onclick = () => act('bs_trainer_overview', {}, '새로 불러왔어요.');
-$('out').onclick = () => { clearProfile(); pwClose(); me = D = only = shown = null; $('main').hidden = true; $('front').hidden = false; $('detail').hidden = true; ['classes', 'students', 'detail', 'stats', 'who'].forEach(i => $(i).innerHTML = ''); say('msg', ''); say('clMsg', ''); };
+$('out').onclick = () => { $('chBox').hidden = true; say('chMsg', ''); clearProfile(); pwClose(); me = D = only = shown = null; $('main').hidden = true; $('front').hidden = false; $('detail').hidden = true; ['classes', 'students', 'detail', 'stats', 'who'].forEach(i => $(i).innerHTML = ''); say('msg', ''); say('clMsg', ''); };
 </script>
 </body>
 </html>
