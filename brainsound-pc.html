@@ -820,7 +820,7 @@ function trEnd() {
   const G = GAMES.find(x => x.id === tr.id), pts = Math.round(cl(tr.g.pts, 0, 100)), avgF = tr.lvT ? Math.round(tr.lvSum / tr.lvT) : 100;
   const recs = store.get('bs_pc_train') || []; recs.push({ t: new Date().toISOString(), game: G.id, pts, avgF, dur: tr.dur, sit, sitName: sitName() }); store.set('bs_pc_train', recs.slice(-600));
   const best = trBest(); const prev = best[G.id]; if (prev === undefined || pts > prev) { best[G.id] = pts; store.set('bs_pc_trbest', best); }
-  if (tr.contest) tr.cRank = ctAdd(G.id, pts); tr.phase = 'result'; tr.pts = pts; tr.prev = prev; tr.win = tr.g.pos > 0 || (tr.g.me > tr.g.rv); $('trStart').textContent = tr.id === 'car' ? '차 고르고 다시 하기' : '다시 하기'; const earn = ($('fast').checked && !tr.contest) ? 0 : Math.round(pts * .5) + (tr.win ? 20 : 0); if (earn) store.set('bs_pc_coins', coins() + earn); $('trMsg').textContent = (tr.contest ? `대회 기록이 올라갔어요 🏆 (${ctTries(G.id)}/${CT_MAX}회)` : '기록이 저장됐어요 ✔') + (earn ? ` · +${earn}코인 (보유 ${coins()})` : ' · 연습 모드는 코인이 없어요'); trRender(); if (typeof renderTrainLog === 'function') renderTrainLog(); }
+  if (tr.contest) { ctAdd(G.id, pts); bsSubmit(tr, G.id, pts); } tr.phase = 'result'; tr.pts = pts; tr.prev = prev; tr.win = tr.g.pos > 0 || (tr.g.me > tr.g.rv); $('trStart').textContent = tr.id === 'car' ? '차 고르고 다시 하기' : '다시 하기'; const earn = ($('fast').checked && !tr.contest) ? 0 : Math.round(pts * .5) + (tr.win ? 20 : 0); if (earn) store.set('bs_pc_coins', coins() + earn); $('trMsg').textContent = (tr.contest ? `대회 도전을 마쳤어요 🏆 (${ctTries(G.id)}/${CT_MAX}회)` : '기록이 저장됐어요 ✔') + (earn ? ` · +${earn}코인 (보유 ${coins()})` : ' · 연습 모드는 코인이 없어요'); trRender(); if (typeof renderTrainLog === 'function') renderTrainLog(); }
 function erf(x) { const t = 1 / (1 + .3275911 * Math.abs(x)), y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - .284496736) * t + .254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; }
 const phi = z => .5 * (1 + erf(z / Math.SQRT2));
 const topPct = (game, pts) => { const [m, sd] = REF[game] || [50, 15]; return Math.max(1, Math.min(99, Math.round(100 - 100 * phi((pts - m) / sd)))); };
@@ -839,9 +839,22 @@ function trFrame(now) {
     trx.fillStyle = 'rgba(255,255,255,.12)'; trx.fillRect(0, h - 5, w, 5); trx.fillStyle = '#8f9bff'; trx.fillRect(0, h - 5, w * Math.min(1, el / tr.dur), 5); if (el >= tr.dur || tr.g.end) trEnd(); return; }
   // 결과
   G.frame(tr.g, 0, tr.dur, I, w, h); trx.fillStyle = 'rgba(3,5,15,.78)'; trx.fillRect(0, 0, w, h); T('훈련 끝!', w / 2, 72, 'bold 22px sans-serif', '#fff'); T(tr.pts + '점', w / 2, 150, 'bold 70px sans-serif', '#8f9bff');
-  const tp = topPct(tr.id, tr.pts); T(`전체 상위 ${tp}% (예시 기준)`, w / 2, 190, '16px sans-serif', tp <= 30 ? '#4ade80' : '#cfd6f5'); T(tr.prev === undefined ? '첫 기록이에요 🎉' : (tr.pts > tr.prev ? `최고 기록 갱신! (이전 ${tr.prev}점)` : `최고 ${tr.prev}점`), w / 2, 222, '15px sans-serif', '#ffd86b'); T(`평균 집중 ${Math.round(tr.lvT ? tr.lvSum / tr.lvT : 100)}% · ${tr.dur}초`, w / 2, 250, '13px sans-serif', '#9aa4c2'); T('기록이 저장됐어요 ✔', w / 2, 290, '14px sans-serif', '#4ade80'); if (tr.contest && tr.cRank) T(`🏆 대회 이번 주 ${tr.cRank.rank}위 / ${tr.cRank.n}명 (다른 참가자는 예시)`, w / 2, 322, 'bold 15px sans-serif', '#ffd86b');
+  const tp = topPct(tr.id, tr.pts); T(`전체 상위 ${tp}% (예시 기준)`, w / 2, 190, '16px sans-serif', tp <= 30 ? '#4ade80' : '#cfd6f5'); T(tr.prev === undefined ? '첫 기록이에요 🎉' : (tr.pts > tr.prev ? `최고 기록 갱신! (이전 ${tr.prev}점)` : `최고 ${tr.prev}점`), w / 2, 222, '15px sans-serif', '#ffd86b'); T(`평균 집중 ${Math.round(tr.lvT ? tr.lvSum / tr.lvT : 100)}% · ${tr.dur}초`, w / 2, 250, '13px sans-serif', '#9aa4c2'); T('기록이 저장됐어요 ✔', w / 2, 290, '14px sans-serif', '#4ade80'); if (tr.contest && tr.cMsg) T('🏆 ' + tr.cMsg, w / 2, 322, 'bold 15px sans-serif', '#ffd86b');
 }
-// ===================== 대회 (주간 대회 · 다른 참가자는 서버 연동 전 가상 예시) =====================
+// ===================== 대회 (주간 대회) =====================
+// 서버(Supabase). 공개용 키만 사용하고, 테이블에는 직접 접근하지 않고 bs_ 함수만 호출한다.
+const BS_URL = 'https://brfeszcyjsaprbakqsjl.supabase.co', BS_KEY = 'sb_publishable_0Nsga8WVTqBcBS6kcUytrg_UB-1FtnK';
+async function bsRpc(fn, args) { const r = await fetch(BS_URL + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: BS_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}), signal: AbortSignal.timeout(10000) }); if (!r.ok) throw new Error('server ' + r.status); return r.json(); }
+const bsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+// 대회 점수를 서버에 올리고 순위를 받아 온다
+async function bsSubmit(t, game, pts) {
+  const st = bsGet('bs_student'); if (!st) { t.cMsg = '학생 입장 전이라 대회 순위에는 올라가지 않았어요'; return; }
+  t.cMsg = '서버에 점수를 올리는 중…';
+  try { const r = await bsRpc('bs_submit_score', { p_key: st.key, p_game: game, p_points: pts });
+    if (!r.ok) t.cMsg = r.msg; else { t.cMsg = '점수가 서버에 올라갔어요'; const rows = await bsRpc('bs_ranking', { p_game: game }), me = rows.find(x => x.nick === st.nick); if (me) t.cMsg = `이번 주 ${me.rank}위 / ${rows.length}명`; } }
+  catch { if (t.cMsg !== '점수가 서버에 올라갔어요') t.cMsg = '서버에 점수를 올리지 못했어요 (인터넷 확인)'; }
+  sendCtState();
+}
 const CT_MAX = 3, CT_NAMES = ['뇌파왕', '집중냥', '번개손', '고요한숲', '민트초코', '파란고래', '느긋한곰', '별빛러너', '초집중토끼', '새벽공부러', '말랑두뇌', '불꽃슛돌이', '조용한호랑이', '구름산책', '알파파도', '베타번개', '세타요정', '레몬에이드', '깜빡이장군', '하늘다람쥐', '뚝심거북', '노을카페', '단단한바위', '반짝별똥', '솜사탕펀치', '용감한펭귄', '차분한파도', '두근두근', '해바라기씨', '졸린올빼미'];
 const ctWeekStart = () => { const d = new Date(), k = (d.getDay() + 6) % 7; return new Date(d.getFullYear(), d.getMonth(), d.getDate() - k); };
 const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
