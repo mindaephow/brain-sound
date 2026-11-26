@@ -66,14 +66,11 @@
   <!-- 1. 학교 -->
   <section id="p-school">
     <div class="card">
-      <h2>1. 학교 등록</h2><p class="hint" style="margin:0 0 16px">학교를 등록하면 <b>학교 코드</b>가 만들어져요. 선생님과 학생이 이 코드로 소속을 정해요. 같은 이름의 학교가 여러 곳 있어서 지역도 함께 입력해요.</p>
-      <div class="form">
-        <label class="f full">학교 이름<input type="text" id="scName" placeholder="예: 햇살초등학교" maxlength="40"></label>
-        <label class="f">시·도<select id="scSido"></select></label>
-        <label class="f">시·군·구<input type="text" id="scGu" placeholder="예: 강남구" maxlength="20"></label>
-        <label class="f">학교급<select id="scLv"><option>초등학교</option><option>중학교</option><option>고등학교</option><option>기타</option></select></label>
-      </div>
-      <div class="row" style="margin-top:18px"><button class="btn pri" id="scGo">학교 등록하기</button><span class="msg" id="scMsg"></span></div>
+      <h2>1. 학교 등록</h2><p class="hint" style="margin:0 0 16px"><b>교육청에 등록된 학교</b>를 검색해서 골라 주세요. 등록하면 <b>학교 코드</b>가 만들어지고, 선생님과 학생이 이 코드로 소속을 정해요.</p>
+      <form id="scForm"><div class="form"><label class="f full">학교 이름 검색<input type="text" id="scName" placeholder="학교 이름 2자 이상 (예: 중앙고)" maxlength="30" autocomplete="off"></label></div>
+      <div class="row" style="margin-top:14px"><button class="btn pri" id="scGo">검색</button><span class="msg" id="scMsg"></span></div></form>
+      <div id="scFound" style="overflow-x:auto;margin-top:12px"></div>
+      <p class="hint" style="margin:10px 0 0">학교 정보: 나이스 교육정보 개방 포털. 목록에 없는 곳은 본사에 문의해 주세요.</p>
       <div id="scCode" class="codebox" hidden><div class="hint">학교 코드 (선생님께 알려 주세요)</div><div class="code" id="scCodeV"></div></div>
     </div>
     <div class="card"><h3>등록된 학교</h3><div id="scList"></div></div>
@@ -140,7 +137,6 @@ const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 let schools = null, mine = [];   // mine: 이 브라우저에서 신청한 교사들 { key, name, status, school, classes }
 const keys = () => bsGet('bs_teacher_keys') || [];
 const put = (k, v) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
-['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'].forEach(s => $('scSido').add(new Option(s, s)));
 $('clYear').value = new Date().getFullYear();
 const say = (id, t, k) => { const e = $(id); e.textContent = t; e.className = 'msg ' + (k || ''); };
 const NET = '서버에 연결하지 못했어요. 인터넷을 확인하고 다시 눌러 주세요.';
@@ -165,10 +161,17 @@ function render() {
 async function loadSchools() { try { schools = await bsRpc('bs_list_schools'); } catch { schools = null; } render(); }
 async function loadMine() { try { mine = (await Promise.all(keys().map(async k => { const r = await bsRpc('bs_teacher_info', { p_key: k }); return r && { ...r, key: k }; }))).filter(Boolean); render(); return true; } catch { render(); return false; } }
 
-$('scGo').onclick = () => { const name = $('scName').value.trim(), gu = $('scGu').value.trim(); $('scCode').hidden = true;
-  if (name.length < 2) return say('scMsg', '학교 이름을 입력해 주세요.', 'bad'); if (!gu) return say('scMsg', '시·군·구를 입력해 주세요.', 'bad');
-  send('scGo', 'scMsg', async () => { const r = await bsRpc('bs_register_school', { p_name: name, p_sido: $('scSido').value, p_gu: gu, p_level: $('scLv').value }); if (!r.ok) return say('scMsg', r.msg, 'bad');
-    $('scCode').hidden = false; $('scCodeV').textContent = r.code; say('scMsg', '학교가 등록됐어요 ✔ 코드는 지금 적어 두세요.', 'ok'); $('scName').value = ''; await loadSchools(); }); };
+let found = [];
+$('scForm').onsubmit = e => { e.preventDefault(); const q = $('scName').value.trim(); $('scCode').hidden = true; $('scFound').innerHTML = ''; found = [];
+  if (q.length < 2) return say('scMsg', '학교 이름을 2자 이상 입력해 주세요.', 'bad');
+  send('scGo', 'scMsg', async () => { const res = await fetch('/api/schools?q=' + encodeURIComponent(q), { signal: AbortSignal.timeout(12000) }), r = await res.json(); if (!r.ok) return say('scMsg', r.msg, 'bad');
+    found = r.rows; say('scMsg', !found.length ? '검색된 학교가 없어요. 이름을 확인해 주세요.' : r.more ? `검색 결과가 많아 일부(${found.length}곳)만 보여요. 이름을 더 정확히 입력해 주세요.` : `${found.length}곳을 찾았어요.`, found.length ? 'ok' : 'bad');
+    $('scFound').innerHTML = found.length ? '<table><tr><th>학교</th><th>주소</th><th></th></tr>' + found.map((x, i) => `<tr><td><b>${esc(x.name)}</b> <span class="tag">${esc(x.level)}</span></td><td><span class="hint">${esc(x.address)}</span></td><td><button type="button" class="btn sm" data-pick="${i}">이 학교 등록</button></td></tr>`).join('') + '</table>' : ''; }); };
+$('scFound').onclick = async e => { const b = e.target.closest('[data-pick]'); if (!b) return; const x = found[+b.dataset.pick]; if (!x) return; b.disabled = true; say('scMsg', '등록하는 중…'); $('scCode').hidden = true;
+  try { const r = await bsRpc('bs_register_school_official', { p_code: x.code, p_name: x.name, p_sido: x.sido, p_gu: x.gu, p_level: x.level, p_address: x.address });
+    if (!r.ok) say('scMsg', r.msg, 'bad'); else { $('scCode').hidden = false; $('scCodeV').textContent = r.code; say('scMsg', `${x.name} 등록 완료 ✔ 코드는 지금 적어 두세요.`, 'ok'); $('scFound').innerHTML = ''; $('scName').value = ''; await loadSchools(); } }
+  catch { say('scMsg', NET, 'bad'); }
+  b.disabled = false; };
 
 $('tcGo').onclick = () => { const name = $('tcName').value.trim(), mail = $('tcMail').value.trim(), code = $('tcCode').value.trim().toUpperCase(), sid = $('tcSchool').value;
   if (name.length < 2) return say('tcMsg', '교사 이름을 2자 이상 입력해 주세요.', 'bad'); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return say('tcMsg', '이메일을 올바르게 입력해 주세요.', 'bad');
