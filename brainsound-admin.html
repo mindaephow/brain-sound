@@ -80,7 +80,8 @@
     <div class="row" style="margin-bottom:10px"><span class="msg" id="msg"></span></div>
     <div class="card"><div class="scroll" id="list"></div></div>
     <div class="card" id="detail" hidden></div>
-    <div class="card"><h3>대회 설정</h3><label class="chk"><input type="checkbox" id="demoOk"><span><b>시험용: 데모 모드 점수도 대회 순위에 올리기.</b> 실제 대회에서는 반드시 꺼 두세요.</span></label><span class="msg" id="setMsg"></span></div>
+    <div class="card"><h3>대회 설정</h3><label class="chk"><input type="checkbox" id="demoOk"><span><b>시험용: 데모 모드 점수도 대회 순위에 올리기.</b> 실제 대회에서는 반드시 꺼 두세요.</span></label><span class="msg" id="setMsg"></span>
+      <label class="chk" style="margin-top:14px"><input type="checkbox" id="admTest"><span><b>이 컴퓨터를 관리자 테스트용으로 사용.</b> 이 브라우저의 PC 앱 데모 모드에서만 <b>스페이스를 집중력</b>으로 쓰고 방향키로 움직일 수 있어요. 다른 사람의 컴퓨터에는 영향이 없어요. 시험이 끝나면 끄세요.</span></label></div>
     <div class="card"><div class="row" style="justify-content:space-between"><h3 id="iqTitle">홈페이지 문의</h3></div><div class="scroll" id="inquiries"></div></div>
   </div>
 </div>
@@ -186,6 +187,8 @@ async function loadExtra() {
   } catch { $('inquiries').innerHTML = '<div class="empty">문의를 불러오지 못했어요. 8번 SQL 실행 여부를 확인해 주세요.</div>'; } }
 $('inquiries').addEventListener('click', async e => { const b = e.target.closest('[data-iq]'); if (!b) return; e.stopPropagation(); if (b.dataset.a === 'delete' && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = '정말 삭제?'; return; } b.disabled = true;
   try { const r = await bsRpc('bs_admin_inquiry', { p_pass: pw, p_id: b.dataset.iq, p_action: b.dataset.a }); if (!r.ok) say('msg', r.msg, 'bad'); await loadExtra(); } catch { say('msg', NET, 'bad'); b.disabled = false; } });
+try { $('admTest').checked = localStorage.getItem('bs_admin_test') === '1'; } catch {}
+$('admTest').onchange = () => { try { if ($('admTest').checked) localStorage.setItem('bs_admin_test', '1'); else localStorage.removeItem('bs_admin_test'); say('setMsg', $('admTest').checked ? '이 컴퓨터에서 테스트 조작을 켰어요.' : '테스트 조작을 껐어요.', 'ok'); } catch { $('admTest').checked = false; say('setMsg', '이 브라우저에는 저장할 수 없어요.', 'bad'); } };
 $('demoOk').onchange = async () => { try { const r = await bsRpc('bs_admin_settings', { p_pass: pw, p_allow_demo: $('demoOk').checked }); if (!r.ok) throw 0; $('demoOk').checked = r.allow_demo; say('setMsg', r.allow_demo ? '데모 점수가 순위에 올라가요 (시험용).' : '실기기 점수만 순위에 올라가요.', 'ok'); } catch { $('demoOk').checked = !$('demoOk').checked; say('setMsg', NET, 'bad'); } };
 $('re').onclick = () => { act('bs_admin_overview', {}, '새로 불러왔어요.'); loadExtra(); };
 $('out').onclick = () => { pwClose(); pw = ''; D = null; only = shown = null; $('main').hidden = true; $('detail').hidden = true; $('login').hidden = false; $('list').innerHTML = $('detail').innerHTML = $('stats').innerHTML = $('inquiries').innerHTML = ''; say('setMsg', ''); };
