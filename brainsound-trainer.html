@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>브레인 사운드 트레이너</title>
+<style>
+  :root { --bg:#04050d; --muted:#9aa4c2; --line:#1e2848; --main:#3b4fe0; --glow:#8f9bff; --ok:#4ade80; --warn:#ff8a57; --gold:#ffd86b; --cyan:#5ee7ff; --bad:#ff6b6b; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:radial-gradient(1100px 460px at 50% -10%,#1a2470 0,#04050d 62%) no-repeat, var(--bg); color:#fff; font-family:"Pretendard Variable","Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif; word-break:keep-all; min-height:100vh; }
+  button,input,select { font:inherit; color:inherit; }
+  button { cursor:pointer; }
+  .wrap { max-width:980px; margin:0 auto; padding:24px 20px 70px; }
+  .logo { font-weight:900; letter-spacing:.16em; font-size:14px; background:linear-gradient(90deg,#fff,var(--glow)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  h1 { font-size:clamp(26px,5vw,38px); margin:8px 0 6px; } h2 { font-size:19px; margin:0 0 4px; } h3 { font-size:15px; margin:0 0 8px; }
+  .sub { color:var(--muted); font-size:14.5px; line-height:1.7; margin:0 0 18px; }
+  .hint { font-size:13px; color:var(--muted); line-height:1.65; }
+  .warnbox { background:rgba(255,138,87,.1); border:1px solid rgba(255,138,87,.4); border-radius:12px; padding:11px 15px; font-size:13.5px; color:#ffd2bd; margin-bottom:16px; line-height:1.65; }
+  .steps { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:6px 0 18px; }
+  @media (max-width:760px) { .steps { grid-template-columns:1fr 1fr; } }
+  .st { text-align:left; padding:13px 14px; border-radius:14px; border:1px solid rgba(143,155,255,.2); background:rgba(255,255,255,.03); }
+  .st:hover { border-color:var(--glow); }
+  .st.on { border-color:var(--cyan); background:rgba(94,231,255,.08); box-shadow:0 0 0 1px var(--cyan) inset; }
+  .st i { font-style:normal; display:inline-flex; width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,#4a5cff,#8f6bff); align-items:center; justify-content:center; font-size:12.5px; font-weight:800; margin-right:8px; }
+  .st b { font-size:14.5px; } .st span { display:block; font-size:12px; color:var(--muted); margin-top:4px; }
+  .card { background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015)); border:1px solid rgba(143,155,255,.2); border-radius:20px; padding:22px; margin-bottom:16px; }
+  .form { display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; }
+  @media (max-width:700px) { .form { grid-template-columns:1fr; } }
+  .full { grid-column:1/-1; }
+  label.f { display:grid; gap:6px; font-size:13.5px; font-weight:700; }
+  label.f small { font-weight:400; color:var(--muted); font-size:12px; }
+  input[type=text],input[type=email],input[type=number],select { padding:12px 14px; border-radius:12px; border:1px solid #2a3558; background:#070a1c; width:100%; font-size:15px; }
+  input:focus,select:focus { outline:2px solid var(--cyan); outline-offset:0; border-color:transparent; }
+  .chk { display:flex; gap:10px; align-items:flex-start; font-size:13.5px; line-height:1.6; color:#cfd6f5; } .chk input { margin-top:4px; width:17px; height:17px; flex:none; }
+  .btn { border:1px solid #2a3558; background:rgba(255,255,255,.05); padding:11px 22px; border-radius:999px; font-size:14.5px; font-weight:700; }
+  .btn:hover { border-color:var(--glow); }
+  .btn.pri { background:linear-gradient(135deg,#4a5cff,#3b4fe0 60%,#6a3bff); border:0; box-shadow:0 8px 26px rgba(74,92,255,.5); }
+  .btn.sm { padding:6px 13px; font-size:12.5px; }
+  .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .msg { font-size:13.5px; line-height:1.6; } .msg.bad { color:var(--bad); } .msg.ok { color:var(--ok); }
+  .codebox { margin-top:14px; padding:16px 18px; border-radius:14px; background:rgba(94,231,255,.08); border:1px dashed var(--cyan); }
+  .codebox .code { font-size:30px; font-weight:900; letter-spacing:.14em; color:var(--cyan); font-variant-numeric:tabular-nums; }
+  table { width:100%; border-collapse:collapse; font-size:14px; } td,th { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:middle; } th { color:var(--muted); font-weight:600; font-size:12.5px; }
+  .tag { display:inline-block; font-size:12px; padding:3px 10px; border-radius:999px; border:1px solid #2a3556; color:var(--muted); }
+  .tag.ok { color:#c8f7d9; border-color:rgba(74,222,128,.5); } .tag.wait { color:#ffd2bd; border-color:rgba(255,138,87,.5); }
+  .mono { font-family:Consolas,monospace; letter-spacing:.08em; color:var(--cyan); font-weight:700; }
+  .empty { color:var(--muted); font-size:14px; padding:18px 6px; text-align:center; }
+  footer { margin-top:30px; font-size:12.5px; color:#6b7599; line-height:1.8; }
+  .wrap { max-width:1100px; }
+  .tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; } .tabs .btn.on { border-color:var(--cyan); background:rgba(94,231,255,.1); }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:16px; }
+  .stats button { text-align:left; padding:14px 16px; border-radius:14px; border:1px solid rgba(143,155,255,.2); background:rgba(255,255,255,.03); }
+  .stats span { display:block; font-size:12.5px; color:var(--muted); } .stats b { font-size:26px; }
+  .link { background:none; border:0; padding:0; text-decoration:underline; text-underline-offset:3px; color:var(--cyan); font-size:inherit; }
+  .scroll { overflow-x:auto; } td { white-space:nowrap; }
+  .search { padding:10px 14px; border-radius:12px; border:1px solid #2a3558; background:#070a1c; min-width:220px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="logo" href="landing.html" target="_top" aria-label="브레인 사운드 첫 화면" style="text-decoration:none">BRAIN SOUND</a>
+  <h1>트레이너</h1>
+  <p class="sub">지역에서 아이들을 모집해 훈련시키는 트레이너를 위한 화면이에요. 본사 승인 후에 반을 만들고 내 아이들의 기록을 관리합니다.</p>
+
+  <div id="front">
+    <div class="warnbox"><b>시험 운영 중이에요.</b> 아직은 시험용 값만 넣고 실제 개인정보는 넣지 마세요.</div>
+    <div class="tabs"><button class="btn on" id="vLogin">로그인</button><button class="btn" id="vApply">트레이너 신청</button></div>
+    <form class="card" id="login" style="max-width:460px">
+      <div class="form" style="grid-template-columns:1fr"><label class="f">이메일<input type="email" id="lgMail" autocomplete="username"></label><label class="f">비밀번호<input type="password" id="lgPw" autocomplete="current-password" class="search"></label></div>
+      <div class="row" style="margin-top:16px"><button class="btn pri" id="lgGo">들어가기</button><span class="msg" id="lgMsg"></span></div>
+      <p class="hint" style="margin:12px 0 0">비밀번호를 잊으면 본사에 새 비밀번호 설정을 요청해 주세요.</p>
+    </form>
+    <form class="card" id="apply" hidden>
+      <div class="form">
+        <label class="f">이름<input type="text" id="apName" maxlength="30"></label>
+        <label class="f">연락처<input type="text" id="apPhone" maxlength="20" inputmode="tel" placeholder="010-0000-0000"></label>
+        <label class="f">활동 시·도<select id="apSido"></select></label>
+        <label class="f">활동 시·군·구<input type="text" id="apGu" maxlength="20"></label>
+        <label class="f full">이메일 (로그인에 사용)<input type="email" id="apMail" maxlength="100" autocomplete="username"></label>
+        <label class="f">비밀번호 (8자 이상)<input type="password" id="apPw" autocomplete="new-password" class="search"></label>
+        <label class="f">비밀번호 다시 입력<input type="password" id="apPw2" autocomplete="new-password" class="search"></label>
+        <label class="f full">소속 훈련장<select id="apCenter"><option value="">없음 (본사 직속)</option></select></label>
+        <label class="f full">소개·경력 (선택)<input type="text" id="apIntro" maxlength="200"></label>
+        <div class="full"><label class="chk"><input type="checkbox" id="apAgree"><span>트레이너 정보(이름·연락처·이메일·지역)를 승인과 안내 목적으로 수집하는 것에 동의해요. 아이들의 기록은 훈련 목적으로만 보고 외부에 공개하지 않겠습니다.</span></label></div>
+      </div>
+      <div class="row" style="margin-top:18px"><button class="btn pri" id="apGo">신청하기</button><span class="msg" id="apMsg"></span></div>
+    </form>
+  </div>
+
+  <div id="main" hidden>
+    <div class="row" style="margin-bottom:14px"><b id="who"></b><span style="flex:1"></span><button class="btn sm" id="re">새로고침</button><button class="btn sm" id="pwOpen">비밀번호 변경</button><button class="btn sm" id="out">나가기</button></div>
+    <div class="row" style="margin-bottom:10px"><span class="msg" id="msg"></span></div>
+    <form class="card" id="pwForm" style="max-width:460px" hidden><h3>비밀번호 변경</h3>
+      <div class="form" style="grid-template-columns:1fr"><label class="f">지금 비밀번호<input type="password" id="pwOld" autocomplete="current-password" class="search"></label><label class="f">새 비밀번호 (8자 이상)<input type="password" id="pwNew" autocomplete="new-password" class="search"></label><label class="f">새 비밀번호 다시 입력<input type="password" id="pwNew2" autocomplete="new-password" class="search"></label></div>
+      <div class="row" style="margin-top:16px"><button class="btn pri" id="pwSave">변경하기</button><button type="button" class="btn" id="pwCancel">닫기</button><span class="msg" id="pwMsg"></span></div>
+    </form>
+    <div class="card" id="wait" hidden></div>
+    <div id="work" hidden>
+      <div class="stats" id="stats"></div>
+      <form class="card" id="newClass"><h3>새 반 만들기</h3>
+        <div class="form"><label class="f">반 이름<input type="text" id="clName" maxlength="30" placeholder="예: 토요 집중반"></label><label class="f">연도<input type="number" id="clYear" min="2025" max="2040"></label><label class="f">예상 인원<input type="number" id="clN" min="1" max="200"></label></div>
+        <div class="row" style="margin-top:16px"><button class="btn pri" id="clGo">반 만들기</button><span class="msg" id="clMsg"></span></div>
+      </form>
+      <div class="card"><h3>내 반</h3><p class="hint" style="margin:0 0 10px">아이들은 대회 페이지의 <b>학교·교사 등록 → 학생 입장</b>에서 반 코드를 넣고 들어와요.</p><div class="scroll" id="classes"></div></div>
+      <div class="card"><div class="row" style="justify-content:space-between"><h3 id="stTitle">내 아이들</h3><button class="btn sm" id="all" hidden>전체 보기</button></div><div class="scroll" id="students"></div></div>
+      <div class="card" id="detail" hidden></div>
+    </div>
+  </div>
+</div>
+<script>
+// 서버(Supabase). 공개용 키만 사용하고, 테이블에는 직접 접근하지 않고 bs_ 함수만 호출한다.
+const BS_URL = 'https://brfeszcyjsaprbakqsjl.supabase.co', BS_KEY = 'sb_publishable_0Nsga8WVTqBcBS6kcUytrg_UB-1FtnK';
+async function bsRpc(fn, args) { const r = await fetch(BS_URL + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: BS_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}), signal: AbortSignal.timeout(10000) }); if (!r.ok) throw new Error('server ' + r.status); return r.json(); }
+const bsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const say = (id, t, k) => { const e = $(id); e.textContent = t; e.className = 'msg ' + (k || ''); };
+const GN = { balloon: '풍선 띄우기', car: '자동차 경주', puzzle: '퍼즐 맞추기', dragon: '드래곤 마을 지키기', candle: '촛불 끄기', flower: '꽃 피우기', axe: '도끼 던지기', archery: '양궁', balance: '좌우 균형', tug: '뇌파 줄다리기' };
+const when = t => t ? new Date(t).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+const NET = '처리하지 못했어요. 인터넷 연결과 4번(훈련장·트레이너) SQL 실행 여부를 확인해 주세요.';
+let me = null, D = null, only = null, shown = null;   // 로그인 정보는 저장하지 않고 이 창이 열려 있는 동안만 기억
+['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'].forEach(s => $('apSido').add(new Option(s, s)));
+$('clYear').value = new Date().getFullYear();
+bsRpc('bs_list_centers').then(l => l.forEach(c => $('apCenter').add(new Option(`${c.name} (${c.sido} ${c.gu})`, c.id)))).catch(() => {});
+const view = a => { $('login').hidden = a; $('apply').hidden = !a; $('vLogin').classList.toggle('on', !a); $('vApply').classList.toggle('on', a); };
+$('vLogin').onclick = () => view(false); $('vApply').onclick = () => view(true);
+async function send(btn, msg, fn) { $(btn).disabled = true; say(msg, '보내는 중…'); try { await fn(); } catch { say(msg, NET, 'bad'); } $(btn).disabled = false; }
+
+$('apply').onsubmit = e => { e.preventDefault(); const v = id => $(id).value.trim();
+  if (v('apName').length < 2) return say('apMsg', '이름을 입력해 주세요.', 'bad'); if (!/^[0-9\- ]{8,20}$/.test(v('apPhone'))) return say('apMsg', '연락처를 숫자로 입력해 주세요.', 'bad');
+  if (!v('apGu')) return say('apMsg', '활동 시·군·구를 입력해 주세요.', 'bad'); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v('apMail'))) return say('apMsg', '이메일을 올바르게 입력해 주세요.', 'bad');
+  if ($('apPw').value.length < 8) return say('apMsg', '비밀번호는 8자 이상으로 해 주세요.', 'bad'); if ($('apPw').value !== $('apPw2').value) return say('apMsg', '비밀번호 두 칸이 서로 달라요.', 'bad'); if (!$('apAgree').checked) return say('apMsg', '동의에 체크해 주세요.', 'bad');
+  send('apGo', 'apMsg', async () => { const r = await bsRpc('bs_trainer_apply', { p_name: v('apName'), p_email: v('apMail'), p_phone: v('apPhone'), p_sido: $('apSido').value, p_gu: v('apGu'), p_intro: v('apIntro'), p_pass: $('apPw').value, p_center: $('apCenter').value || null }); if (!r.ok) return say('apMsg', r.msg, 'bad');
+    $('lgMail').value = v('apMail'); $('apply').reset(); view(false); say('apMsg', ''); say('lgMsg', '신청이 접수됐어요. 본사 승인 후에 이용할 수 있어요.', 'ok'); }); };
+
+function render() {
+  $('who').textContent = `${D.name} 트레이너${D.region ? ' · ' + D.region : ''}${D.center ? ' · ' + D.center : ''}`;
+  const ok = D.status === '승인'; $('work').hidden = !ok; $('wait').hidden = ok;
+  if (!ok) { $('wait').innerHTML = D.status === '거절' ? '<h3>승인되지 않았어요</h3><p class="hint">본사에 문의해 주세요.</p>' : '<h3>본사 승인 대기 중이에요</h3><p class="hint">승인된 뒤 <b>새로고침</b>을 누르면 반을 만들 수 있어요.</p>'; return; }
+  if (only && !D.classes.some(c => c.id === only)) only = null;
+  $('stats').innerHTML = [['내 반', D.classes.length], ['내 아이들', D.students.length], ['훈련 기록', D.students.reduce((a, s) => a + s.train, 0)], ['대회 도전', D.students.reduce((a, s) => a + s.contest, 0)]].map(x => `<button type="button"><span>${x[0]}</span><b>${x[1]}</b></button>`).join('');
+  $('classes').innerHTML = D.classes.length ? '<table><tr><th>반</th><th>반 코드</th><th>학생</th><th></th></tr>' + D.classes.map(c => `<tr><td><b>${esc(c.name)}</b><br><span class="hint">${c.year}년${c.headcount ? ' · 예상 ' + c.headcount + '명' : ''}</span></td><td class="mono">${esc(c.code)}</td><td><button class="link" data-cls="${esc(c.id)}">${D.students.filter(s => s.class_id === c.id).length}명</button></td><td><button class="btn sm" data-del="class" data-id="${esc(c.id)}">삭제</button></td></tr>`).join('') + '</table>' : '<div class="empty">아직 만든 반이 없어요.</div>';
+  const list = D.students.filter(s => !only || s.class_id === only), cn = id => (D.classes.find(c => c.id === id) || {}).name || '?';
+  $('stTitle').textContent = only ? `${cn(only)} 아이들` : '내 아이들'; $('all').hidden = !only;
+  $('students').innerHTML = list.length ? '<table><tr><th>닉네임</th><th>반</th><th>훈련</th><th>최고 점수</th><th>대회</th><th>마지막 기록</th><th>관리</th></tr>' + list.map(s => `<tr><td><b>${esc(s.nick)}</b><br><span class="hint">${s.age}세${s.guardian ? ' · 보호자 동의' : ''}</span></td><td>${esc(cn(s.class_id))}</td><td>${s.train}회</td><td>${s.best === null ? '-' : s.best + '점'}</td><td>${s.contest}회</td><td>${when(s.last)}</td><td><button class="btn sm pri" data-view="${esc(s.id)}">기록 보기</button> <button class="btn sm" data-ren="${esc(s.id)}">닉네임 수정</button> <button class="btn sm" data-del="student" data-id="${esc(s.id)}">삭제</button></td></tr>`).join('') + '</table>' : '<div class="empty">아직 들어온 아이가 없어요. 반 코드를 알려 주세요.</div>';
+}
+async function load() { const r = await bsRpc('bs_trainer_overview', me); if (!r.ok) return r; D = r; if (shown && !D.students.some(s => s.id === shown)) { shown = null; $('detail').hidden = true; } render(); return r; }
+async function act(fn, args, done) { say('msg', '처리 중…'); try { const r = await bsRpc(fn, { ...me, ...args }); if (!r.ok) return say('msg', r.msg, 'bad'); await load(); say('msg', done, 'ok'); } catch { say('msg', NET, 'bad'); } }
+$('login').onsubmit = e => { e.preventDefault(); const m = $('lgMail').value.trim(), p = $('lgPw').value; if (!m || !p) return say('lgMsg', '이메일과 비밀번호를 입력해 주세요.', 'bad');
+  send('lgGo', 'lgMsg', async () => { me = { p_email: m, p_pass: p }; const r = await load(); if (!r.ok) { me = null; return say('lgMsg', r.msg, 'bad'); } $('front').hidden = true; $('main').hidden = false; $('lgPw').value = ''; say('lgMsg', ''); }); };
+$('newClass').onsubmit = e => { e.preventDefault(); const name = $('clName').value.trim(); if (!name) return say('clMsg', '반 이름을 입력해 주세요.', 'bad');
+  send('clGo', 'clMsg', async () => { const r = await bsRpc('bs_trainer_create_class', { ...me, p_year: parseInt($('clYear').value, 10) || null, p_name: name, p_headcount: parseInt($('clN').value, 10) || null }); if (!r.ok) return say('clMsg', r.msg, 'bad'); $('clName').value = ''; await load(); say('clMsg', `반이 만들어졌어요 ✔ 반 코드 ${r.code}`, 'ok'); }); };
+async function records(id) { const s = D.students.find(x => x.id === id), box = $('detail'); shown = id; box.hidden = false; box.innerHTML = '<div class="empty">불러오는 중…</div>';
+  try { const r = await bsRpc('bs_trainer_student', { ...me, p_id: id }); if (!r.ok) throw 0; if (shown !== id) return;
+    const table = (h, rows) => rows.length ? '<div class="scroll"><table><tr>' + h.map(x => `<th>${x}</th>`).join('') + '</tr>' + rows.map(v => '<tr>' + v.map(c => `<td>${c}</td>`).join('') + '</tr>').join('') + '</table></div>' : '<div class="empty">기록이 없어요.</div>';
+    box.innerHTML = `<h2>${esc(s.nick)} 기록</h2><h3 style="margin-top:14px">훈련 기록 (대회 도전 포함)</h3>` + table(['때', '종목', '점수', '평균 집중', '시간', '구분'], r.train.map(x => [when(x.at), esc(GN[x.game] || x.game), x.points + '점', x.avg_focus + '%', x.dur + '초', x.demo ? '데모' : '실기기'])) + '<h3 style="margin-top:18px">대회 기록</h3>' + table(['때', '종목', '점수'], r.contest.map(x => [when(x.at), esc(GN[x.game] || x.game), x.points + '점']));
+    box.scrollIntoView({ block: 'nearest' }); } catch { box.innerHTML = '<div class="empty">기록을 불러오지 못했어요.</div>'; } }
+$('work').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const x = b.dataset;
+  if (x.cls) { only = x.cls; return render(); } if (b.id === 'all') { only = null; return render(); }
+  if (x.view) return records(x.view);
+  if (x.ren) { b.parentElement.innerHTML = `<input class="search" style="min-width:140px" maxlength="12" value="${esc(D.students.find(s => s.id === x.ren).nick)}" aria-label="새 닉네임"> <button class="btn sm pri" data-save="${esc(x.ren)}">저장</button> <button class="btn sm" data-cancel="1">취소</button>`; return; }
+  if (x.save) return act('bs_trainer_rename', { p_id: x.save, p_nick: b.parentElement.querySelector('input').value }, '닉네임을 바꿨어요.');
+  if (x.cancel) return render();
+  // 삭제는 되돌릴 수 없어서 두 번 눌러야 실행
+  if (x.del) { if (!x.sure) { b.dataset.sure = 1; b.textContent = x.del === 'class' ? '정말 삭제? (아이들·기록 포함)' : '정말 삭제? (기록 포함)'; setTimeout(() => { delete b.dataset.sure; b.textContent = '삭제'; }, 5000); return; } b.disabled = true; return act('bs_trainer_delete', { p_kind: x.del, p_id: x.id }, '삭제했어요.'); }
+});
+const pwClose = () => { $('pwForm').reset(); $('pwForm').hidden = true; say('pwMsg', ''); };
+$('pwOpen').onclick = () => { $('pwForm').hidden = false; $('pwOld').focus(); }; $('pwCancel').onclick = pwClose;
+$('pwForm').onsubmit = e => { e.preventDefault(); const o = $('pwOld').value, n = $('pwNew').value;
+  if (!o) return say('pwMsg', '지금 비밀번호를 입력해 주세요.', 'bad'); if (n.length < 8) return say('pwMsg', '새 비밀번호는 8자 이상으로 해 주세요.', 'bad'); if (n !== $('pwNew2').value) return say('pwMsg', '새 비밀번호 두 칸이 서로 달라요.', 'bad');
+  send('pwSave', 'pwMsg', async () => { const r = await bsRpc('bs_trainer_change_password', { p_email: me.p_email, p_old: o, p_new: n }); if (!r.ok) return say('pwMsg', r.msg, 'bad'); me.p_pass = n; pwClose(); say('msg', '비밀번호를 변경했어요 ✔', 'ok'); }); };
+$('re').onclick = () => act('bs_trainer_overview', {}, '새로 불러왔어요.');
+$('out').onclick = () => { pwClose(); me = D = only = shown = null; $('main').hidden = true; $('front').hidden = false; $('detail').hidden = true; ['classes', 'students', 'detail', 'stats', 'who'].forEach(i => $(i).innerHTML = ''); say('msg', ''); say('clMsg', ''); };
+</script>
+</body>
+</html>

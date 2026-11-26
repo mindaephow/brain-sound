@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>브레인 사운드 관리자</title>
+<title>브레인 사운드 본사 관리자</title>
 <style>
   :root { --bg:#04050d; --muted:#9aa4c2; --line:#1e2848; --main:#3b4fe0; --glow:#8f9bff; --ok:#4ade80; --warn:#ff8a57; --gold:#ffd86b; --cyan:#5ee7ff; --bad:#ff6b6b; }
   * { box-sizing:border-box; }
@@ -61,8 +61,8 @@
 <body>
 <div class="wrap">
   <a class="logo" href="landing.html" target="_top" aria-label="브레인 사운드 첫 화면" style="text-decoration:none">BRAIN SOUND</a>
-  <h1>대회 · 회원 관리자</h1>
-  <p class="sub">교사 승인, 학교·반·학생(회원) 관리, 대회·훈련 기록 확인을 한곳에서 합니다.</p>
+  <h1>본사 관리자</h1>
+  <p class="sub">훈련장·트레이너·교사 승인, 학교·반·학생(회원) 관리, 대회·훈련 기록 확인을 한곳에서 합니다.</p>
   <form class="card" id="login" style="max-width:460px">
     <label class="f">관리자 비밀번호<input type="password" id="pw" autocomplete="current-password" class="search"></label>
     <div class="row" style="margin-top:16px"><button class="btn pri" id="inBtn">들어가기</button><span class="msg" id="inMsg"></span></div>
@@ -91,43 +91,54 @@ const $ = id => document.getElementById(id);
 const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const say = (id, t, k) => { const e = $(id); e.textContent = t; e.className = 'msg ' + (k || ''); };
 const GN = { balloon: '풍선 띄우기', car: '자동차 경주', puzzle: '퍼즐 맞추기', dragon: '드래곤 마을 지키기', candle: '촛불 끄기', flower: '꽃 피우기', axe: '도끼 던지기', archery: '양궁', balance: '좌우 균형', tug: '뇌파 줄다리기' };
-const KINDS = { teachers: ['교사', 'teacher'], students: ['학생 회원', 'student'], classes: ['반', 'class'], schools: ['학교', 'school'] };
+const KINDS = { centers: ['훈련장', 'center'], trainers: ['트레이너', 'trainer'], teachers: ['교사', 'teacher'], students: ['학생 회원', 'student'], classes: ['반', 'class'], schools: ['학교', 'school'] };
 const when = t => t ? new Date(t).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
-let pw = '', D = null, tab = 'teachers', only = null, shown = null;   // 비밀번호는 저장하지 않음. only: { key, id, label }
+let pw = '', D = null, tab = 'centers', only = null, shown = null;   // 비밀번호는 저장하지 않음. only: { key, id, label }
 const NET = '처리하지 못했어요. 인터넷 연결과 3번(관리자) SQL 실행 여부를 확인해 주세요.';
 const by = (k, id) => D[k].find(x => x.id === id) || {};
 // 각 항목이 어느 학교·교사·반에 속하는지
 function ties(k, x) {
   if (k === 'schools') return { school_id: x.id };
+  if (k === 'centers') return { center_id: x.id };
+  if (k === 'trainers') return { trainer_id: x.id, center_id: x.center_id };
   if (k === 'teachers') return { school_id: x.school_id, teacher_id: x.id };
-  if (k === 'classes') return { school_id: x.school_id, teacher_id: x.teacher_id, class_id: x.id };
-  const c = by('classes', x.class_id); return { school_id: c.school_id, teacher_id: c.teacher_id, class_id: x.class_id };
+  if (k === 'classes') return { school_id: x.school_id, teacher_id: x.teacher_id, trainer_id: x.trainer_id, center_id: by('trainers', x.trainer_id).center_id, class_id: x.id };
+  const c = by('classes', x.class_id); return { school_id: c.school_id, teacher_id: c.teacher_id, trainer_id: c.trainer_id, center_id: by('trainers', c.trainer_id).center_id, class_id: x.class_id };
 }
 const go = (t, key, id, label, text) => `<button class="link" data-go="${t}" data-key="${key}" data-id="${esc(id)}" data-label="${esc(label)}">${esc(text)}</button>`;
 const del = (k, id) => `<button class="btn sm" data-del="${KINDS[k][1]}" data-id="${esc(id)}">삭제</button>`;
 const stag = s => s === '승인' ? '<span class="tag ok">승인됨</span>' : s === '거절' ? '<span class="tag wait">거절됨</span>' : '<span class="tag wait">승인 대기</span>';
+const trLink = id => go('trainers', 'trainer_id', id, (by('trainers', id).name || '?') + ' 트레이너', (by('trainers', id).name || '?') + ' 트레이너');
 const COLS = {
+  centers: [['훈련장', '담당자', '트레이너', '아이', '상태', '처리'], c => { const n = k => D[k].filter(x => ties(k, x).center_id === c.id).length;
+    return [`<b>${esc(c.name)}</b><br><span class="hint">${esc(c.region)}${c.address ? ' · ' + esc(c.address) : ''}</span>`, `${esc(c.manager)}<br><span class="hint">${esc(c.phone)} · ${esc(c.email)}</span>`,
+      go('trainers', 'center_id', c.id, c.name, n('trainers') + '명'), go('students', 'center_id', c.id, c.name, n('students') + '명'), stag(c.status),
+      (c.status !== '승인' ? `<button class="btn sm pri" data-ce="${esc(c.id)}" data-s="승인">승인</button> ` : '') + (c.status !== '거절' ? `<button class="btn sm" data-ce="${esc(c.id)}" data-s="거절">${c.status === '승인' ? '승인 취소' : '거절'}</button> ` : '') + `<button class="btn sm" data-cepw="${esc(c.id)}">비밀번호 재설정</button>`]; }],
+  trainers: [['트레이너', '연락처', '지역', '소속 훈련장', '반', '회원', '상태', '처리'], t => [`<b>${esc(t.name)}</b><br><span class="hint">${esc(t.email)}</span>${t.intro ? `<br><span class="hint">${esc(t.intro)}</span>` : ''}`, esc(t.phone), esc(t.region),
+    `<select class="search" style="min-width:150px" data-assign="${esc(t.id)}" aria-label="소속 훈련장"><option value="">본사 직속</option>${D.centers.map(c => `<option value="${esc(c.id)}"${c.id === t.center_id ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select>`,
+    go('classes', 'trainer_id', t.id, t.name + ' 트레이너', D.classes.filter(c => c.trainer_id === t.id).length + '개'), go('students', 'trainer_id', t.id, t.name + ' 트레이너', D.students.filter(s => ties('students', s).trainer_id === t.id).length + '명'), stag(t.status),
+    (t.status !== '승인' ? `<button class="btn sm pri" data-tr="${esc(t.id)}" data-s="승인">승인</button> ` : '') + (t.status !== '거절' ? `<button class="btn sm" data-tr="${esc(t.id)}" data-s="거절">${t.status === '승인' ? '승인 취소' : '거절'}</button> ` : '') + `<button class="btn sm" data-trpw="${esc(t.id)}">비밀번호 재설정</button>`]],
   schools: [['학교', '학교 코드', '교사', '반', '학생'], s => { const n = k => D[k].filter(x => ties(k, x).school_id === s.id).length;
     return [`<b>${esc(s.name)}</b><br><span class="hint">${esc(s.region)} · ${esc(s.level)}</span>`, `<span class="mono">${esc(s.code)}</span>`, ...['teachers', 'classes', 'students'].map(k => go(k, 'school_id', s.id, s.name, n(k) + (k === 'classes' ? '개' : '명')))]; }],
   teachers: [['교사', '학교', '분야', '반', '상태', '승인'], t => [`<b>${esc(t.name)}</b><br><span class="hint">${esc(t.email)}</span>`, go('schools', 'school_id', t.school_id, by('schools', t.school_id).name, by('schools', t.school_id).name || '?'), esc(t.role),
     go('classes', 'teacher_id', t.id, t.name + ' 선생님', D.classes.filter(c => c.teacher_id === t.id).length + '개'), stag(t.status),
     (t.status !== '승인' ? `<button class="btn sm pri" data-t="${esc(t.id)}" data-s="승인">승인</button> ` : '') + (t.status !== '거절' ? `<button class="btn sm" data-t="${esc(t.id)}" data-s="거절">${t.status === '승인' ? '승인 취소' : '거절'}</button>` : '')]],
-  classes: [['반', '학교', '담당 교사', '반 코드', '학생'], c => [`<b>${esc(c.name)}</b><br><span class="hint">${c.year}학년도${c.headcount ? ' · 예상 ' + c.headcount + '명' : ''}</span>`, go('schools', 'school_id', c.school_id, by('schools', c.school_id).name, by('schools', c.school_id).name || '?'),
-    go('teachers', 'teacher_id', c.teacher_id, by('teachers', c.teacher_id).name, by('teachers', c.teacher_id).name || '?'), `<span class="mono">${esc(c.code)}</span>`, go('students', 'class_id', c.id, c.name, D.students.filter(s => s.class_id === c.id).length + '명')]],
+  classes: [['반', '학교', '담당 교사', '반 코드', '학생'], c => [`<b>${esc(c.name)}</b><br><span class="hint">${c.year}년${c.headcount ? ' · 예상 ' + c.headcount + '명' : ''}</span>`, c.trainer_id ? '<span class="tag">트레이너 반</span>' : go('schools', 'school_id', c.school_id, by('schools', c.school_id).name, by('schools', c.school_id).name || '?'),
+    c.trainer_id ? trLink(c.trainer_id) : go('teachers', 'teacher_id', c.teacher_id, by('teachers', c.teacher_id).name, by('teachers', c.teacher_id).name || '?'), `<span class="mono">${esc(c.code)}</span>`, go('students', 'class_id', c.id, c.name, D.students.filter(s => s.class_id === c.id).length + '명')]],
   students: [['닉네임', '학교 · 반', '대회', '훈련', '마지막 기록', '관리'], s => { const c = by('classes', s.class_id), sc = by('schools', c.school_id);
-    return [`<b>${esc(s.nick)}</b><br><span class="hint">${s.age}세${s.guardian ? ' · 보호자 동의' : ''} · 가입 ${when(s.at)}</span>`, `${go('schools', 'school_id', sc.id, sc.name, sc.name || '?')}<br>${go('classes', 'class_id', c.id, c.name, c.name || '?')}`,
+    return [`<b>${esc(s.nick)}</b><br><span class="hint">${s.age}세${s.guardian ? ' · 보호자 동의' : ''} · 가입 ${when(s.at)}</span>`, `${c.trainer_id ? trLink(c.trainer_id) : go('schools', 'school_id', sc.id, sc.name, sc.name || '?')}<br>${go('classes', 'class_id', c.id, c.name, c.name || '?')}`,
       s.contest + '회', s.train + '회', when(s.last), `<button class="btn sm pri" data-view="${esc(s.id)}">기록 보기</button> <button class="btn sm" data-ren="${esc(s.id)}">닉네임 수정</button>`]; }]
 };
 function render() {
-  const wait = D.teachers.filter(t => t.status === '대기').length;
-  $('stats').innerHTML = Object.entries(KINDS).map(([k, v]) => `<button data-tab="${k}"><span>${v[0]}${k === 'teachers' && wait ? ' · 승인 대기 ' + wait : ''}</span><b style="${k === 'teachers' && wait ? 'color:var(--warn)' : ''}">${D[k].length}</b></button>`).join('');
+  const waits = k => (k === 'teachers' || k === 'trainers' || k === 'centers') ? D[k].filter(t => t.status === '대기').length : 0;
+  $('stats').innerHTML = Object.entries(KINDS).map(([k, v]) => `<button data-tab="${k}"><span>${v[0]}${waits(k) ? ' · 승인 대기 ' + waits(k) : ''}</span><b style="${waits(k) ? 'color:var(--warn)' : ''}">${D[k].length}</b></button>`).join('');
   $('tabs').innerHTML = Object.entries(KINDS).map(([k, v]) => `<button class="btn${k === tab ? ' on' : ''}" data-tab="${k}">${v[0]} 관리</button>`).join('');
   $('filter').hidden = $('clear').hidden = !only; if (only) $('filter').textContent = only.label + ' 만 보는 중';
   const q = $('q').value.trim().toLowerCase(), [head, row] = COLS[tab];
-  const items = D[tab].filter(x => !only || ties(tab, x)[only.key] === only.id).filter(x => { if (!q) return true; const t = ties(tab, x), s = by('schools', t.school_id), c = t.class_id ? by('classes', t.class_id) : {}; return [x.name, x.nick, x.email, x.code, s.name, c.name].some(v => v && String(v).toLowerCase().includes(q)); });
+  const items = D[tab].filter(x => !only || ties(tab, x)[only.key] === only.id).filter(x => { if (!q) return true; const t = ties(tab, x), s = by('schools', t.school_id), c = t.class_id ? by('classes', t.class_id) : {}; const tr = t.trainer_id ? by('trainers', t.trainer_id) : {}; return [x.name, x.nick, x.email, x.code, x.phone, x.region, s.name, c.name, tr.name].some(v => v && String(v).toLowerCase().includes(q)); });
   $('list').innerHTML = items.length ? '<table><tr>' + head.map(h => `<th>${h}</th>`).join('') + '<th></th></tr>' + items.map(x => '<tr>' + row(x).map(v => `<td>${v}</td>`).join('') + `<td>${del(tab, x.id)}</td></tr>`).join('') + '</table>' : '<div class="empty">보여 줄 항목이 없어요.</div>';
 }
-async function load() { const r = await bsRpc('bs_admin_overview', { p_pass: pw }); if (!r.ok) return r; D = r; if (only && !D[only.key.replace('_id', '') === 'class' ? 'classes' : only.key.replace('_id', 's')].some(x => x.id === only.id)) only = null; if (shown && !D.students.some(s => s.id === shown)) { shown = null; $('detail').hidden = true; } render(); return r; }
+async function load() { const r = await bsRpc('bs_admin_overview', { p_pass: pw }); if (!r.ok) return r; D = { ...r, centers: r.centers || [], trainers: r.trainers || [] }; if (only && !D[{ school_id: 'schools', teacher_id: 'teachers', trainer_id: 'trainers', center_id: 'centers', class_id: 'classes' }[only.key]].some(x => x.id === only.id)) only = null; if (shown && !D.students.some(s => s.id === shown)) { shown = null; $('detail').hidden = true; } render(); return r; }
 async function act(fn, args, done) { say('msg', '처리 중…'); try { const r = await bsRpc(fn, { p_pass: pw, ...args }); if (!r.ok) { say('msg', r.msg, 'bad'); return; } await load(); say('msg', done, 'ok'); } catch { say('msg', NET, 'bad'); } }
 async function view(id) { const s = by('students', id), box = $('detail'); shown = id; box.hidden = false; box.innerHTML = '<div class="empty">불러오는 중…</div>';
   try { const r = await bsRpc('bs_admin_student', { p_pass: pw, p_id: id }); if (!r.ok) throw 0; if (shown !== id) return;
@@ -139,6 +150,12 @@ $('main').onclick = e => { const b = e.target.closest('button'); if (!b) return;
   if (x.tab) { tab = x.tab; only = null; $('q').value = ''; return render(); }
   if (x.go) { tab = x.go; only = { key: x.key, id: x.id, label: x.label }; $('q').value = ''; return render(); }
   if (x.t) { b.disabled = true; return act('bs_admin_set_teacher', { p_id: x.t, p_status: x.s }, x.s === '승인' ? '승인했어요 ✔' : '거절 상태로 바꿨어요.'); }
+  if (x.tr) { b.disabled = true; return act('bs_admin_set_trainer', { p_id: x.tr, p_status: x.s }, x.s === '승인' ? '트레이너를 승인했어요 ✔' : '거절 상태로 바꿨어요.'); }
+  if (x.trpw) { b.parentElement.innerHTML = `<input class="search" style="min-width:160px" type="password" autocomplete="new-password" placeholder="새 비밀번호 8자 이상" aria-label="트레이너 새 비밀번호"> <button class="btn sm pri" data-trsave="${esc(x.trpw)}">저장</button> <button class="btn sm" data-cancel="1">취소</button>`; return; }
+  if (x.trsave) { const v = b.parentElement.querySelector('input').value; if (v.length < 8) return say('msg', '새 비밀번호는 8자 이상으로 해 주세요.', 'bad'); return act('bs_admin_trainer_password', { p_id: x.trsave, p_new: v }, '트레이너 비밀번호를 새로 설정했어요.'); }
+  if (x.ce) { b.disabled = true; return act('bs_admin_set_center', { p_id: x.ce, p_status: x.s }, x.s === '승인' ? '훈련장을 승인했어요 ✔' : '거절 상태로 바꿨어요.'); }
+  if (x.cepw) { b.parentElement.innerHTML = `<input class="search" style="min-width:160px" type="password" autocomplete="new-password" placeholder="새 비밀번호 8자 이상" aria-label="훈련장 새 비밀번호"> <button class="btn sm pri" data-cesave="${esc(x.cepw)}">저장</button> <button class="btn sm" data-cancel="1">취소</button>`; return; }
+  if (x.cesave) { const v = b.parentElement.querySelector('input').value; if (v.length < 8) return say('msg', '새 비밀번호는 8자 이상으로 해 주세요.', 'bad'); return act('bs_admin_center_password', { p_id: x.cesave, p_new: v }, '훈련장 비밀번호를 새로 설정했어요.'); }
   if (x.view) return view(x.view);
   if (x.ren) { const td = b.parentElement; td.innerHTML = `<input class="search" style="min-width:140px" maxlength="12" value="${esc(by('students', x.ren).nick)}" aria-label="새 닉네임"> <button class="btn sm pri" data-save="${esc(x.ren)}">저장</button> <button class="btn sm" data-cancel="1">취소</button>`; return; }
   if (x.save) return act('bs_admin_rename_student', { p_id: x.save, p_nick: b.parentElement.querySelector('input').value }, '닉네임을 바꿨어요.');
@@ -147,6 +164,7 @@ $('main').onclick = e => { const b = e.target.closest('button'); if (!b) return;
   if (x.del) { if (!x.sure) { b.dataset.sure = 1; b.textContent = x.del === 'student' ? '정말 삭제? (기록 포함)' : '정말 삭제? (딸린 정보 포함)'; setTimeout(() => { delete b.dataset.sure; b.textContent = '삭제'; }, 5000); return; } b.disabled = true; return act('bs_admin_delete', { p_kind: x.del, p_id: x.id }, '삭제했어요.'); }
 };
 $('q').oninput = () => render();
+$('list').onchange = e => { const s = e.target.closest('[data-assign]'); if (s) act('bs_admin_assign_trainer', { p_trainer: s.dataset.assign, p_center: s.value || null }, '소속 훈련장을 바꿨어요.'); };
 $('clear').addEventListener('click', () => { only = null; render(); });
 $('login').onsubmit = async e => { e.preventDefault(); pw = $('pw').value; if (!pw) return say('inMsg', '비밀번호를 입력해 주세요.', 'bad'); $('inBtn').disabled = true; say('inMsg', '확인 중…');
   try { const r = await load(); if (!r.ok) say('inMsg', r.msg, 'bad'); else { $('login').hidden = true; $('main').hidden = false; $('pw').value = ''; say('inMsg', ''); } } catch { say('inMsg', NET, 'bad'); } $('inBtn').disabled = false; };

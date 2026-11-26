@@ -115,12 +115,12 @@
   <!-- 4. 학생 -->
   <section id="p-student" hidden>
     <div class="card">
-      <h2>4. 학생 반 입장</h2><p class="hint" style="margin:0 0 16px">학생이 선생님께 받은 <b>반 코드</b>로 들어와요. 이름은 받지 않고 <b>닉네임</b>만 써요. 14세 미만은 보호자 동의가 필요해요.</p>
+      <h2>4. 학생 반 입장</h2><p class="hint" style="margin:0 0 16px">학생이 선생님(교사·트레이너)께 받은 <b>반 코드</b>로 들어와요. 이름은 받지 않고 <b>닉네임</b>만 써요. 14세 미만은 보호자 동의가 필요해요.</p>
       <div class="form">
         <label class="f">닉네임<input type="text" id="stNick" maxlength="12" placeholder="예: 번개손"></label>
         <label class="f">나이(만)<input type="number" id="stAge" min="6" max="19" placeholder="예: 11"></label>
         <label class="f full">반 코드<input type="text" id="stCode" placeholder="CLS-XXXXXX" maxlength="10" style="text-transform:uppercase"></label>
-        <div class="full" id="stGuardBox" hidden><label class="chk"><input type="checkbox" id="stGuard"><span><b>보호자 동의</b> — 만 14세 미만이에요. 보호자가 닉네임·훈련 기록이 담당 교사에게 보이는 것에 동의했어요.</span></label></div>
+        <div class="full" id="stGuardBox" hidden><label class="chk"><input type="checkbox" id="stGuard"><span><b>보호자 동의</b> — 만 14세 미만이에요. 보호자가 닉네임·나이·훈련 기록을 서버에 저장하고 담당 선생님(교사·트레이너)과 본사가 보는 것에 동의했어요.</span></label></div>
       </div>
       <div class="row" style="margin-top:18px"><button class="btn pri" id="stGo">반에 들어가기</button><span class="msg" id="stMsg"></span></div>
     </div>
