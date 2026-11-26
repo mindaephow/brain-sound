@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>브레인 사운드 - 나의 뇌에 맞는 집중 사운드</title>
+<meta name="description" content="뇌파를 측정하고, 나에게 맞는 집중 사운드를 찾아, 집중 상태로 만들어 주는 브레인 사운드. 직접 만드는 DIY 키트와 완성품.">
+<style>
+  /* 색상·간격은 옴니핏 제품 페이지 구조를 참고하되 우리 방식으로 조정 */
+  :root { --bg:#05081a; --bg2:#0a1028; --card:#0f1631; --ink:#fff; --muted:#9aa4c2; --line:#1e2848; --main:#3b4fe0; --glow:#8f9bff; --accent:#ff8a57; --ok:#4ade80; }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { word-break:keep-all; margin:0; background:var(--bg); color:var(--ink); font-family:"Pretendard Variable","Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif; line-height:1.7; }
+  .w { max-width:1080px; margin:0 auto; padding:0 24px; }
+  nav { position:fixed; top:0; left:0; right:0; z-index:10; height:64px; background:rgba(5,8,26,.72); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+  nav .w { display:flex; align-items:center; gap:22px; height:64px; }
+  nav b { flex:1; letter-spacing:.16em; font-size:16px; }
+  nav a { color:var(--muted); text-decoration:none; font-size:14px; }
+  nav a:hover { color:#fff; }
+  .btn { display:inline-flex; align-items:center; gap:8px; background:var(--main); color:#fff; text-decoration:none; padding:14px 28px; border-radius:999px; font-weight:700; font-size:15px; border:1px solid var(--main); cursor:pointer; font-family:inherit; box-shadow:0 8px 30px rgba(59,79,224,.4); }
+  .btn.ghost { background:transparent; border-color:#3a4666; box-shadow:none; }
+  .btn.sm { padding:8px 18px; font-size:14px; box-shadow:none; }
+  .eyebrow { color:var(--glow); letter-spacing:.2em; font-size:12px; font-weight:700; margin-bottom:12px; }
+
+  /* 히어로: 왼쪽 문구, 오른쪽 제품 */
+  .hero { padding:130px 0 70px; background:radial-gradient(ellipse at 75% 40%, rgba(59,79,224,.28), transparent 60%), var(--bg); }
+  .hero .w { display:grid; grid-template-columns:1.05fr .95fr; gap:30px; align-items:center; }
+  .hero h1 { font-size:clamp(32px,5.4vw,52px); line-height:1.18; font-weight:800; margin:0 0 20px; letter-spacing:-.015em; }
+  .hero h1 em { font-style:normal; color:var(--glow); }
+  .hero p { color:var(--muted); font-size:clamp(15px,2vw,18px); margin:0 0 28px; max-width:480px; }
+  .cta { display:flex; gap:12px; flex-wrap:wrap; }
+  .hero img { width:100%; max-width:440px; height:auto; display:block; margin:0 auto; filter:drop-shadow(0 30px 60px rgba(59,79,224,.35)); }
+  .hero .cap { text-align:center; font-size:11px; color:var(--muted); margin-top:6px; }
+  @media (max-width:760px) { .hero .w { grid-template-columns:1fr; text-align:center; } .hero p { margin-left:auto; margin-right:auto; } .cta { justify-content:center; } .hero { padding-top:100px; } }
+
+  section { padding:90px 0; }
+  .alt { background:var(--bg2); }
+  h2 { font-size:clamp(26px,4.4vw,38px); font-weight:800; line-height:1.3; margin:0 0 12px; letter-spacing:-.01em; }
+  .sub { color:var(--muted); max-width:640px; margin:0 0 40px; }
+  .center { text-align:center; } .center .sub { margin-left:auto; margin-right:auto; }
+
+  /* 단계 (PROGRAM) */
+  .stepsList { display:grid; gap:18px; }
+  .st { display:grid; grid-template-columns:90px 1fr; gap:20px; padding:26px; background:var(--card); border:1px solid var(--line); border-radius:22px; }
+  .st .no { font-size:44px; font-weight:800; color:var(--glow); line-height:1; opacity:.9; }
+  .st h3 { margin:0 0 4px; font-size:21px; }
+  .st .tm { display:inline-block; font-size:12px; color:var(--glow); border:1px solid var(--line); border-radius:999px; padding:1px 10px; margin-left:8px; vertical-align:middle; }
+  .st p { margin:0; color:var(--muted); font-size:15px; }
+  .st.key { border-color:var(--main); box-shadow:0 0 0 1px var(--main) inset, 0 10px 40px rgba(59,79,224,.18); }
+  @media (max-width:560px) { .st { grid-template-columns:1fr; gap:8px; } }
+
+  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:24px; }
+  .card .n { color:var(--glow); font-size:12px; letter-spacing:.16em; font-weight:700; margin-bottom:10px; }
+  .card h3 { margin:0 0 8px; font-size:18px; }
+  .card p { margin:0; font-size:14.5px; color:var(--muted); }
+  .tags { margin-top:14px; }
+  .tag { display:inline-block; font-size:12.5px; padding:4px 12px; border-radius:999px; border:1px solid #2a3556; color:var(--muted); margin:3px 4px 3px 0; }
+  .card.hl { border-color:var(--main); }
+
+  /* 원리 두 칸 */
+  .two { display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
+  .flow { display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin-top:16px; font-size:13px; color:var(--muted); }
+  .flow span { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:5px 10px; }
+  .flow i { font-style:normal; color:var(--glow); }
+
+  table { width:100%; border-collapse:collapse; font-size:14.5px; border:1px solid var(--line); border-radius:16px; overflow:hidden; }
+  th, td { padding:14px 18px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top; background:var(--card); }
+  th { color:var(--muted); font-weight:600; background:var(--bg2); }
+  tr:last-child td { border-bottom:0; }
+  .note { font-size:13px; color:var(--muted); margin-top:18px; }
+
+  details { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 20px; margin-bottom:10px; }
+  summary { cursor:pointer; font-weight:700; }
+  details p { color:var(--muted); font-size:14.5px; margin:10px 0 0; }
+
+  form { max-width:600px; background:var(--card); border:1px solid var(--line); border-radius:22px; padding:26px; display:grid; gap:14px; margin:0 auto; }
+  label { font-size:14px; font-weight:600; display:grid; gap:6px; }
+  input, select, textarea { font:inherit; padding:12px 14px; border-radius:12px; border:1px solid #2a3556; background:var(--bg); color:var(--ink); width:100%; }
+  textarea { min-height:90px; resize:vertical; }
+  #sent { display:none; color:var(--ok); font-weight:700; text-align:center; }
+  footer { padding:40px 0 60px; color:var(--muted); font-size:13px; border-top:1px solid var(--line); text-align:center; }
+</style>
+<style id="premium">
+  body { background:#03050f; }
+  .progress { position:fixed; top:0; left:0; height:3px; width:0; z-index:20; background:linear-gradient(90deg,#3b4fe0,#8f9bff,#ff8a57); }
+  nav { background:rgba(3,5,15,.55); }
+  nav b { background:linear-gradient(90deg,#fff,#8f9bff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .btn { background:linear-gradient(135deg,#4a5cff,#3b4fe0 60%,#6a3bff); border:0; box-shadow:0 10px 40px rgba(74,92,255,.55), inset 0 1px 0 rgba(255,255,255,.25); transition:transform .25s, box-shadow .25s; }
+  .btn:hover { transform:translateY(-3px); box-shadow:0 16px 50px rgba(74,92,255,.75), inset 0 1px 0 rgba(255,255,255,.3); }
+  .btn.ghost { background:rgba(255,255,255,.04); border:1px solid rgba(143,155,255,.35); box-shadow:none; backdrop-filter:blur(8px); }
+  .btn.sm { padding:8px 20px; }
+
+  .hero { position:relative; overflow:hidden; min-height:100vh; display:flex; align-items:center; padding:110px 0 70px; background:#03050f; }
+  .hero::before { content:""; position:absolute; width:720px; height:720px; right:-160px; top:-80px; border-radius:50%; background:radial-gradient(circle,rgba(74,92,255,.42),transparent 65%); filter:blur(20px); animation:drift 14s ease-in-out infinite alternate; }
+  .hero::after { content:""; position:absolute; width:560px; height:560px; left:-180px; bottom:-200px; border-radius:50%; background:radial-gradient(circle,rgba(160,70,255,.28),transparent 65%); filter:blur(20px); animation:drift 18s ease-in-out infinite alternate-reverse; }
+  @keyframes drift { to { transform:translate(-60px,50px) scale(1.12); } }
+  #heroWave { position:absolute; inset:0; width:100%; height:100%; opacity:.55; }
+  .hero .w { position:relative; z-index:1; width:100%; }
+  .hero .eyebrow { display:inline-block; padding:6px 14px; border:1px solid rgba(143,155,255,.35); border-radius:999px; background:rgba(143,155,255,.08); letter-spacing:.14em; margin-bottom:22px; }
+  .hero h1 { font-size:clamp(38px,6.6vw,72px); line-height:1.12; letter-spacing:-.025em; }
+  .hero h1 em { background:linear-gradient(90deg,#8f9bff,#6ee7ff 55%,#ff8a57); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 28px rgba(110,231,255,.35)); }
+  .hero p { font-size:clamp(16px,2.2vw,20px); color:#b4bddb; }
+
+  section { position:relative; }
+  section + section::before { content:""; position:absolute; top:0; left:10%; right:10%; height:1px; background:linear-gradient(90deg,transparent,rgba(143,155,255,.5),transparent); }
+  .alt { background:linear-gradient(180deg,#070c20,#0a1028); }
+  h2 { font-size:clamp(28px,4.8vw,46px); letter-spacing:-.02em; background:linear-gradient(180deg,#fff,#b9c3ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .eyebrow { display:flex; align-items:center; gap:10px; }
+  .hero .eyebrow { display:inline-block; }
+  .eyebrow::before { content:""; width:28px; height:2px; background:linear-gradient(90deg,#3b4fe0,#8f9bff); }
+  .hero .eyebrow::before { display:none; }
+
+  .card, .st { background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.015)); border:1px solid rgba(143,155,255,.18); backdrop-filter:blur(10px); transition:transform .3s, border-color .3s, box-shadow .3s; }
+  .card:hover, .st:hover { transform:translateY(-6px); border-color:rgba(143,155,255,.6); box-shadow:0 20px 50px rgba(59,79,224,.28); }
+  .card.hl, .st.key { border-color:rgba(110,140,255,.55); box-shadow:0 0 0 1px rgba(110,140,255,.25) inset, 0 14px 50px rgba(59,79,224,.25); }
+  .st.act { border-color:#8f9bff; box-shadow:0 0 0 1px #8f9bff inset, 0 14px 50px rgba(74,92,255,.4); }
+  .stepsList { grid-template-columns:repeat(auto-fit,minmax(380px,1fr)); }
+  @media (max-width:520px) { .stepsList { grid-template-columns:1fr; } }
+  .st .no { font-size:56px; background:linear-gradient(180deg,#a9b4ff,#3b4fe0); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .tag { background:rgba(143,155,255,.08); border-color:rgba(143,155,255,.28); color:#c4ccec; }
+  .card .n { color:#8f9bff; }
+
+  .rv { opacity:0; transform:translateY(34px); transition:opacity .8s ease, transform .8s ease; }
+  .rv.in { opacity:1; transform:none; }
+
+  /* ===== 스마트폰 ===== */
+  .stage { position:relative; display:flex; justify-content:center; padding:20px 0; }
+  .stage::before { content:""; position:absolute; width:380px; height:380px; top:50%; left:50%; transform:translate(-50%,-50%); border-radius:50%; border:1px solid rgba(143,155,255,.3); box-shadow:0 0 90px rgba(74,92,255,.5), inset 0 0 60px rgba(74,92,255,.2); }
+  .stage::after { content:""; position:absolute; width:450px; height:450px; top:50%; left:50%; margin:-225px 0 0 -225px; border-radius:50%; border:1px dashed rgba(143,155,255,.2); animation:spin 40s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .phone { position:relative; z-index:1; width:268px; height:552px; border-radius:42px; padding:9px; background:linear-gradient(145deg,#2a3358,#0b0f22); box-shadow:0 40px 90px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.12) inset, 0 0 60px rgba(74,92,255,.3); animation:float 6s ease-in-out infinite; }
+  @keyframes float { 50% { transform:translateY(-14px); } }
+  .phone .scr { position:relative; width:100%; height:100%; border-radius:34px; overflow:hidden; background:linear-gradient(180deg,#0b1130,#060918); }
+  .phone .notch { position:absolute; top:8px; left:50%; width:84px; height:22px; margin-left:-42px; background:#000; border-radius:14px; z-index:5; }
+  .phone .sb { position:absolute; top:10px; left:22px; right:22px; display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:#cfd6f5; z-index:4; }
+  .pg { position:absolute; inset:0; padding:46px 16px 18px; opacity:0; transform:translateX(24px); transition:opacity .5s, transform .5s; display:flex; flex-direction:column; pointer-events:none; }
+  .pg.on { opacity:1; transform:none; }
+  .pg .tt { font-size:11px; color:#8f9bff; letter-spacing:.14em; font-weight:700; }
+  .pg h4 { margin:4px 0 10px; font-size:17px; line-height:1.3; color:#fff; }
+  .pdots { position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:6px; z-index:5; }
+  .pdots i { width:6px; height:6px; border-radius:50%; background:#2a3358; transition:.3s; }
+  .pdots i.on { width:18px; border-radius:4px; background:#8f9bff; }
+  .ok { display:flex; align-items:center; gap:8px; background:rgba(74,222,128,.1); border:1px solid rgba(74,222,128,.35); border-radius:12px; padding:10px 12px; font-size:12px; color:#bdf5d0; margin-bottom:8px; }
+  .ok i { width:8px; height:8px; border-radius:50%; background:#4ade80; box-shadow:0 0 10px #4ade80; }
+  .band { margin:10px auto 6px; width:150px; height:62px; border-radius:60px 60px 24px 24px; border:2px solid #4a5cff; border-bottom-color:transparent; position:relative; box-shadow:0 0 24px rgba(74,92,255,.5); }
+  .band::before, .band::after { content:""; position:absolute; top:34px; width:12px; height:12px; border-radius:50%; background:#8f9bff; box-shadow:0 0 12px #8f9bff; }
+  .band::before { left:26px; } .band::after { right:26px; }
+  .sit { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; }
+  .sit span { font-size:10.5px; padding:4px 9px; border-radius:999px; border:1px solid #2a3558; color:#aab3d6; }
+  .sit span.on { background:#3b4fe0; border-color:#3b4fe0; color:#fff; }
+  .pg canvas { width:100%; height:92px; border-radius:12px; background:rgba(255,255,255,.03); display:block; }
+  .big { font-size:46px; font-weight:800; line-height:1; margin:10px 0 2px; background:linear-gradient(90deg,#8f9bff,#6ee7ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .mini { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+  .mini div { background:rgba(255,255,255,.04); border-radius:10px; padding:7px 9px; font-size:10.5px; color:#9aa4c2; }
+  .mini b { display:block; font-size:15px; color:#fff; }
+  .ai { font-size:10.5px; color:#9aa4c2; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+  .ai i { width:6px; height:6px; border-radius:50%; background:#ff8a57; animation:blink 1s infinite; }
+  @keyframes blink { 50% { opacity:.2; } }
+  .snd { margin-bottom:7px; font-size:11px; color:#cfd6f5; }
+  .snd .bar { height:7px; margin-top:3px; border-radius:4px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .snd .bar i { display:block; height:100%; width:0; border-radius:4px; background:linear-gradient(90deg,#3b4fe0,#6ee7ff); transition:width 1.4s ease; }
+  .snd.best { color:#fff; font-weight:700; }
+  .snd.best .bar i { background:linear-gradient(90deg,#4ade80,#6ee7ff); }
+  .eq { display:flex; align-items:flex-end; gap:4px; height:70px; margin:12px 0; }
+  .eq i { flex:1; border-radius:3px; background:linear-gradient(180deg,#6ee7ff,#3b4fe0); animation:eq 1s ease-in-out infinite; }
+  @keyframes eq { 0%,100% { height:20%; } 50% { height:95%; } }
+  .gauge { position:relative; width:130px; height:130px; margin:6px auto 4px; border-radius:50%; background:conic-gradient(#6ee7ff 0 82%, rgba(255,255,255,.08) 0); display:flex; align-items:center; justify-content:center; }
+  .gauge::before { content:""; position:absolute; inset:10px; border-radius:50%; background:#080c22; }
+  .gauge span { position:relative; font-size:30px; font-weight:800; color:#fff; }
+  .gauge small { position:absolute; bottom:30px; font-size:10px; color:#8f9bff; z-index:1; }
+  .note2 { text-align:center; font-size:11px; color:#7f89aa; margin-top:10px; position:relative; z-index:2; }
+  @media (max-width:760px) { .stage::before,.stage::after { display:none; } }
+  @media (prefers-reduced-motion:reduce) { .rv { opacity:1; transform:none; } .hero::before,.hero::after,.phone,.stage::after,.eq i { animation:none; } }
+</style>
+<style id="divecss">
+  #dive { height:460vh; padding:0; background:#02040c; }
+  #dive::before { display:none; }
+  .dive-sticky { position:sticky; top:0; height:100vh; overflow:hidden; }
+  #diveCv { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .dive-top { position:absolute; top:84px; left:0; right:0; padding:0 24px; max-width:1080px; margin:0 auto; z-index:2; }
+  .dive-cap { position:absolute; left:0; right:0; bottom:11vh; text-align:center; padding:0 24px; z-index:2; font-size:clamp(22px,4.2vw,44px); font-weight:800; line-height:1.3; letter-spacing:-.02em; text-shadow:0 0 30px rgba(74,92,255,.8); transition:opacity .5s; }
+  .dive-cap small { display:block; margin-top:10px; font-size:clamp(13px,1.6vw,17px); font-weight:500; color:#aeb8dc; text-shadow:none; }
+  .dive-hint { position:absolute; left:0; right:0; bottom:4vh; text-align:center; color:#8f9bff; font-size:13px; letter-spacing:.12em; z-index:2; animation:blink 1.6s infinite; transition:opacity .4s; }
+  .dive-note { position:absolute; right:18px; bottom:10px; font-size:11px; color:#5f6a8c; z-index:2; }
+  @keyframes blink { 50% { opacity:.35; } }
+</style>
+<style id="ddcss">
+  .dd { position:relative; }
+  .dd .ddt { display:inline-block; padding:20px 0; }
+  .ddm { position:absolute; top:56px; right:-110px; max-width:calc(100vw - 32px); display:none; gap:28px; min-width:430px; padding:22px 26px; background:rgba(10,16,40,.97); border:1px solid rgba(143,155,255,.28); border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,.6); backdrop-filter:blur(14px); }
+  .dd:hover .ddm, .dd:focus-within .ddm { display:flex; }
+  .ddc { flex:1; }
+  .ddh { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:#9aa4c2; padding-bottom:10px; margin-bottom:8px; border-bottom:1px solid #1e2848; }
+  .ddh i { width:7px; height:7px; border-radius:50%; }
+  .ddm a { display:block; padding:7px 0; color:#e8ecff; font-size:15px; font-weight:600; white-space:nowrap; }
+  .ddm a:hover { color:#8f9bff; }
+  .ddm a em { font-style:normal; margin-left:8px; font-size:11px; font-weight:600; color:#8f9bff; border:1px solid rgba(143,155,255,.4); border-radius:999px; padding:1px 8px; }
+  @media (max-width:760px) { .dd { display:none; } }
+</style>
+<style>[id^="tr-"]{scroll-margin-top:90px}</style><style>.card .do{margin:0 0 8px !important}.card .do b{display:inline-block;margin-right:8px;font-size:11.5px;letter-spacing:.06em;color:#8f9bff;border:1px solid rgba(143,155,255,.35);border-radius:999px;padding:0 9px}.card .do + .do{color:#e8ecff}</style><style>.gl{margin-top:12px}.gl b{display:inline-block;font-size:11.5px;letter-spacing:.06em;color:#8f9bff;border:1px solid rgba(143,155,255,.35);border-radius:999px;padding:0 9px}.gl .tags{margin-top:8px}</style></head>
+<body><div class="progress" id="progress"></div>
+<nav><div class="w"><b>BRAIN SOUND</b><a href="#program">이용 방법</a><a href="#features">기능</a><div class="dd"><a href="#training" class="ddt">훈련 ▾</a><div class="ddm" style="min-width:640px">
+  <div class="ddc"><div class="ddh"><i style="background:#3b4fe0"></i>집중력 훈련</div><a href="#tr-nf">입문 훈련</a><a href="#tr-power">순간 집중력 훈련</a><a href="#tr-focus">지속 집중력 훈련</a></div>
+  <div class="ddc"><div class="ddh"><i style="background:#4ade80"></i>마음 · 균형 · 소리</div><a href="#tr-relax">이완 · 마음 안정 훈련</a><a href="#tr-balance">좌우 균형 훈련</a><a href="#tr-sound">집중 사운드 훈련</a></div>
+  <div class="ddc"><div class="ddh"><i style="background:#ff8a57"></i>재미있는 훈련</div><a href="#tr-tier">대결</a><a href="#tr-team">팀 훈련</a><a href="#tr-olympic">뇌파 올림픽</a></div>
+</div></div><div class="dd"><a href="#kit" class="ddt">제품소개 ▾</a><div class="ddm">
+  <div class="ddc"><div class="ddh"><i style="background:#3b4fe0"></i>제품</div><a href="#kit">브레인 메이커스 <em>DIY 키트</em></a><a href="#kit">브레인 밴드 <em>완성품</em></a></div>
+  <div class="ddc"><div class="ddh"><i style="background:#ff8a57"></i>서비스</div><a href="#features">마이 사운드 <em>집중 사운드 찾기</em></a><a href="#training">집중력 훈련 프로그램</a><a href="#class">브레인 메이커스 수업</a></div>
+</div></div><a href="#download">다운로드</a><a href="#class">수업</a><a class="btn sm" href="#contact">문의</a></div></nav>
+
+<header class="hero"><canvas id="heroWave"></canvas><div class="w">
+  <div>
+    <div class="eyebrow">BRAIN SOUND · 뇌파 연구 회사</div>
+    <h1>내 뇌에 꼭 맞는<br><em>집중 사운드</em>를<br>AI가 찾아냅니다</h1>
+    <p>운동할 때, 일할 때, 책 읽을 때, 공부할 때. 집중하고 싶은 바로 그 순간의 뇌파를 측정하면, 브레인 사운드 AI가 분석해 나만의 집중 상태를 만들어 드립니다.</p>
+    <div class="cta"><a class="btn" href="#contact">수업·키트 문의 →</a><a class="btn ghost" href="#program">이용 방법 보기</a></div>
+  </div>
+  <div>
+    <div class="stage"><div class="phone"><div class="scr"><div class="notch"></div><div class="sb"><span>9:41</span><span>BRAIN SOUND</span></div>
+  <div class="pg on"><div class="tt">STEP 01 · 착용</div><h4>밴드가 연결됐어요</h4><div class="band"></div>
+    <div class="ok"><i></i>브레인 밴드 연결됨 · 신호 좋음</div><div class="ok"><i></i>이마 좌우 · 귀 뒤 기준 전극 OK</div>
+    <div class="mini"><div>왼쪽 이마<b>좋음</b></div><div>오른쪽 이마<b>좋음</b></div></div></div>
+  <div class="pg"><div class="tt">STEP 02 · 측정</div><h4>어떤 순간에 집중하고 싶나요?</h4>
+    <div class="sit"><span>🏃 운동</span><span>💼 일</span><span>📖 독서</span><span class="on">✏️ 공부</span></div>
+    <canvas id="phWave"></canvas>
+    <div class="mini"><div>집중<b id="pF">82%</b></div><div>이완<b id="pR">41%</b></div></div>
+    <div class="mini" style="grid-template-columns:1fr"><div>좌우 뇌 균형<div style="display:flex;height:8px;padding:0;background:none;border-radius:4px;overflow:hidden;margin-top:6px"><i style="width:49%;background:#6b9cff"></i><i style="width:51%;background:#ff8a57"></i></div><span style="display:flex;justify-content:space-between;margin-top:3px"><span>왼쪽</span><span>오른쪽</span></span></div></div>
+    <div class="ai" style="margin-top:10px"><i></i>공부할 때의 최고 집중 패턴을 저장하는 중…</div></div>
+  <div class="pg"><div class="tt">STEP 03 · AI 분석</div><h4>나에게 맞는 소리를<br>찾고 있어요</h4>
+    <div class="ai"><i></i>브레인 사운드 AI 분석 중</div>
+    <div class="snd" data-v="46">화이트노이즈<div class="bar"><i></i></div></div>
+    <div class="snd" data-v="61">브라운노이즈<div class="bar"><i></i></div></div>
+    <div class="snd" data-v="73">바이노럴 세타 6Hz<div class="bar"><i></i></div></div>
+    <div class="snd best" data-v="91">바이노럴 알파 10Hz ★<div class="bar"><i></i></div></div>
+    <div class="snd" data-v="68">바이노럴 베타 18Hz<div class="bar"><i></i></div></div></div>
+  <div class="pg"><div class="tt">STEP 04 · 집중 상태</div><h4>공부 모드 · 마이 사운드</h4>
+    <div class="gauge"><small>집중</small><span>82%</span></div>
+    <div class="eq"><i style="animation-delay:0s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.1s"></i><i style="animation-delay:.4s"></i><i style="animation-delay:.2s"></i><i style="animation-delay:.35s"></i><i style="animation-delay:.05s"></i><i style="animation-delay:.25s"></i></div>
+    <div class="ok"><i></i>집중 상태 유지 중 · 흐트러지면 소리를 자동 조정</div></div>
+  <div class="pdots"><i class="on"></i><i></i><i></i><i></i></div>
+</div></div></div>
+<div class="note2">* 화면과 수치는 예시입니다</div>
+    
+  </div>
+</div></header>
+
+<section id="dive"><div class="dive-sticky"><canvas id="diveCv"></canvas>
+  <div class="dive-top"><div class="eyebrow">HOW IT WORKS</div></div>
+  <div class="dive-cap" id="diveCap"></div>
+  <div class="dive-hint" id="diveHint">스크롤해서 뇌 속으로 ↓</div>
+  <div class="dive-note">* 이해를 돕기 위한 연출이며 실제 신호와 다를 수 있습니다</div>
+</div></section>
+
+<section id="program" class="alt"><div class="w">
+  <div class="eyebrow">PROGRAM</div>
+  <h2>측정에서 몰입까지, 네 단계</h2>
+  <p class="sub">헤어밴드를 쓰고 앱을 켜면, 나만의 집중 상태가 만들어지는 과정이 시작됩니다.</p>
+  <div class="stepsList">
+    <div class="st"><div class="no">01</div><div><h3>편리하고 쉬운 착용</h3><p>헤어밴드를 이마에 쓰고, 귀 클립 전극을 귓불에 집으면 준비 끝입니다.</p></div></div>
+    <div class="st"><div class="no">02</div><div><h3>집중하고 싶은 순간을 측정합니다</h3><p>집중하고 싶은 상황을 고르고, 그 상황에서 가장 집중이 잘 될 때의 뇌파(최고 집중 패턴)를 찾아 기준으로 저장합니다. 이마 좌우 뇌파를 귀 뒤 기준 전극과 비교해 잡음을 줄입니다.</p><div class="tags"><span class="tag">🏃 운동할 때</span><span class="tag">💼 일할 때</span><span class="tag">📖 책 읽을 때</span><span class="tag">✏️ 공부할 때</span><span class="tag">그 밖의 상황</span></div></div></div>
+    <div class="st key"><div class="no">03</div><div><h3>AI가 나만의 집중 사운드를 찾아냅니다</h3><p>바이노럴비트, 노이즈 등 여러 소리를 바꿔 들려주며 뇌파 반응을 비교합니다. 브레인 사운드 AI가 분석해, 뇌파가 내 기준 패턴에 가장 가까워지고 오래 유지되는 소리를 상황마다 따로 찾아 '마이 사운드'로 저장합니다.</p></div></div>
+    <div class="st key"><div class="no">04</div><div><h3>맞춤 집중 상태로 이끕니다</h3><p>그 상황이 되면 해당 마이 사운드를 틀어 줍니다. 뇌파가 흐트러지면 소리를 자동으로 바꿔 다시 집중 상태로 끌어올립니다.</p></div></div>
+  </div>
+  <p class="note">같은 소리에 뇌가 익숙해지면 효과가 떨어지므로, 서너 개의 소리를 찾아 두고 번갈아 사용합니다. 몇 주 뒤 재측정으로 변화를 확인합니다.</p>
+</div></section>
+
+<section id="principle"><div class="w">
+  <div class="eyebrow">PRINCIPLE</div>
+  <h2>뉴로피드백과 바이노럴비트로 맞춥니다</h2>
+  <p class="sub">브레인 사운드의 훈련과 사운드는 두 가지 원리를 바탕으로 합니다.</p>
+  <div class="two">
+    <div class="card hl"><div class="n">NEUROFEEDBACK</div><h3>뉴로피드백</h3>
+      <p>내 뇌파를 눈으로 확인하면서, 집중된 상태를 스스로 만들어 가는 훈련입니다. 집중하면 풍선이 올라가고 차가 빨라지는 게임 화면이 곧 내 뇌파의 실시간 피드백입니다.</p>
+      <div class="flow"><span>뇌파 측정</span><i>→</i><span>화면으로 실시간 확인</span><i>→</i><span>집중 상태 반복</span><i>→</i><span>스스로 조절하는 힘</span></div></div>
+    <div class="card hl"><div class="n">BINAURAL BEAT</div><h3>바이노럴비트</h3>
+      <p>왼쪽과 오른쪽 귀에 서로 조금 다른 주파수의 소리를 들려주면, 뇌가 두 소리의 차이만큼의 박동을 느끼는 원리를 이용한 소리입니다. 이어폰으로 들어야 합니다.</p>
+      <div class="flow"><span>좌우 다른 주파수</span><i>→</i><span>차이만큼의 박동</span><i>→</i><span>뇌파 반응 비교</span></div></div>
+  </div>
+  <div class="card" style="margin-top:18px"><div class="n">BRAIN SOUND</div><h3>그중 나에게 맞는 소리를, AI가 찾습니다</h3>
+    <p>같은 소리라도 사람마다 반응이 다릅니다. 브레인 사운드는 뇌파를 보면서 소리를 바꿔 가며 내 뇌에 가장 잘 맞는 소리를 찾고, 그 소리로 집중 상태를 이끕니다. 뇌파를 읽고 소리를 실시간으로 조절하는 '폐쇄 루프' 방식입니다.</p>
+    <div class="flow"><span>소리 바꿔 듣기</span><i>→</i><span>뇌파 반응 분석</span><i>→</i><span>나에게 맞는 소리 저장</span><i>→</i><span>집중 상태 유지</span></div></div>
+  <p class="note">집중 훈련과 체험을 위한 서비스이며, 효과는 사람마다 다를 수 있습니다.</p>
+</div></section>
+
+<section id="features" class="alt"><div class="w">
+  <div class="eyebrow">FEATURES</div>
+  <h2>측정부터 몰입까지, 기능 한눈에</h2>
+  <p class="sub">헤어밴드 하나와 앱으로 아래 기능을 이용합니다.</p>
+  <div class="grid">
+    <div class="card hl"><div class="n">MY SOUND</div><h3>마이 사운드</h3><p>운동·일·독서·공부처럼 집중하고 싶은 상황마다 따로 측정하고, AI가 분석해 맞는 소리를 찾아 저장합니다. 월 1회 테스트로 업데이트합니다.</p><div class="tags"><span class="tag">구독 기능</span></div></div>
+    <div class="card"><div class="n">MEASURE</div><h3>실시간 뇌파 보기</h3><p>왼쪽·오른쪽 이마의 뇌파를 그래프로 보고, 델타·세타·알파·베타 비율을 막대로 확인합니다.</p></div>
+    <div class="card"><div class="n">MEASURE</div><h3>집중·이완 지수</h3><p>기준 측정 후 지수가 '내 기준 대비 %'로 표시됩니다. 좌우 비대칭도 봅니다.</p></div>
+    <div class="card hl"><div class="n">BALANCE</div><h3>좌우 뇌 균형 훈련</h3><p>왼쪽·오른쪽 이마 뇌파를 따로 측정해 좌우 균형을 보여주고, 균형 있게 훈련할 수 있도록 이끕니다.</p></div>
+    <div class="card"><div class="n">RECORD</div><h3>뇌 변화 기록</h3><p>월간 테스트 결과를 쌓아 '이때는 이 소리를 좋아했고, 이렇게 변했다'를 보여주는 내 뇌의 변화 일기입니다.</p><div class="tags"><span class="tag">구독 기능</span></div></div>
+    <div class="card"><div class="n">TRAIN</div><h3>훈련 게임</h3><p>집중하면 풍선이 올라가는 것처럼, 집중·이완 수치가 곧 게임의 힘이 됩니다. 힘캐·무기캐·힐러 직업별로 다른 뇌 상태를 훈련합니다.</p></div>
+    <div class="card"><div class="n">BATTLE</div><h3>대결과 티어</h3><p>1:1 뇌파 줄다리기로 겨루고, 아이언부터 챌린저까지 티어를 올립니다. 반 리그로 시작해 전국까지 넓어집니다.</p></div>
+    <div class="card"><div class="n">CODING</div><h3>뇌파 블록 코딩</h3><p>스크래치(터보워프)에서 뇌파 블록으로 내 게임을 만들고, 앱의 학생 게임관에 올려 친구들과 함께 합니다.</p></div>
+  </div>
+  <p class="note">수업에서는 조립, 코딩, 내 뇌파 보기까지 열리고, 마이 사운드와 변화 기록은 앱 구독으로 이용합니다.</p>
+</div></section>
+
+<section id="training"><div class="w">
+  <div class="eyebrow">TRAINING</div>
+  <h2>뉴로피드백을 활용해 개발한<br>다양한 집중력 훈련 프로그램</h2>
+  <p class="sub">브레인 사운드의 모든 훈련은 <b style="color:#fff">뉴로피드백</b>을 활용합니다. 내 뇌파를 화면과 소리로 실시간 확인하면서, 집중(또는 이완) 수치가 오르면 게임 속에서 뭔가 좋아지도록 집중 상태를 스스로 만들어 갑니다.</p>
+  <div class="flow" style="margin:-14px 0 34px"><span>뇌파 측정</span><i>→</i><span>화면·소리로 실시간 피드백</span><i>→</i><span>집중 상태 반복</span><i>→</i><span>스스로 조절하는 힘</span></div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+    <div class="card hl" id="tr-nf"><div class="n">BASIC</div><h3>입문 훈련</h3><p class="do"><b>훈련 방식</b>집중 지수가 오르면 화면 속 풍선이 올라가는 가장 기본적인 방식으로, 뇌파 피드백에 익숙해집니다.</p><p class="do"><b>효과</b>집중 상태를 스스로 만드는 힘</p><div class="gl"><b>게임 리스트</b><div class="tags"><span class="tag">풍선 띄우기</span><span class="tag">자동차 경주</span><span class="tag">퍼즐 맞추기</span><span class="tag">드래곤 비행</span><span class="tag">촛불 끄기</span></div></div></div>
+    <div class="card hl" id="tr-power"><div class="n">순간 집중</div><h3>순간 집중력 훈련</h3><p class="do"><b>훈련 방식</b>짧고 강한 집중을 순간적으로 끌어올릴수록 점수가 올라가는 방식입니다.</p><p class="do"><b>효과</b>필요한 순간 바로 집중하는 힘</p><div class="gl"><b>게임 리스트</b><div class="tags"><span class="tag">도끼 던지기</span><span class="tag">장풍</span><span class="tag">역도</span><span class="tag">태권도 격파</span><span class="tag">투포환</span></div></div></div>
+    <div class="card hl" id="tr-focus"><div class="n">지속 집중</div><h3>지속 집중력 훈련</h3><p class="do"><b>훈련 방식</b>집중을 흔들림 없이 유지하는 시간이 길수록 점수가 올라가는 방식입니다.</p><p class="do"><b>효과</b>집중을 오래 이어 가는 힘</p><div class="gl"><b>게임 리스트</b><div class="tags"><span class="tag">양궁</span><span class="tag">사격</span><span class="tag">저격</span><span class="tag">다트</span><span class="tag">수영</span></div></div></div>
+    <div class="card hl" id="tr-relax"><div class="n">이완</div><h3>이완 · 마음 안정 훈련</h3><p class="do"><b>훈련 방식</b>마음이 차분할수록 화면 속 변화가 커지는 이완 방식입니다.</p><p class="do"><b>효과</b>긴장 완화와 마음의 안정</p><div class="gl"><b>게임 리스트</b><div class="tags"><span class="tag">꽃 피우기</span><span class="tag">잔잔한 촛불</span><span class="tag">골프 퍼팅</span><span class="tag">컬링</span></div></div></div>
+    <div class="card hl" id="tr-balance"><div class="n">BALANCE</div><h3>좌우 균형 훈련</h3><p class="do"><b>훈련 방식</b>왼쪽·오른쪽 이마 뇌파를 따로 측정해, 두 쪽을 고르게 맞추는 방식입니다.</p><p class="do"><b>효과</b>좌우 균형 있는 뇌 사용</p><div class="gl"><b>게임 리스트</b><div class="tags"><span class="tag">개발 중</span></div></div></div>
+    <div class="card hl" id="tr-sound"><div class="n">SOUND</div><h3>집중 사운드 훈련</h3><p class="do"><b>훈련 방식</b>바이노럴비트 등 소리를 들으며 집중 상태로 이어지도록 훈련합니다. 흐트러지면 소리가 자동으로 조정되고, 나에게 맞는 소리는 AI가 찾습니다.</p><p class="do"><b>효과</b>소리로 집중 상태에 들어가는 감각</p><div class="gl"><b>사운드 리스트</b><div class="tags"><span class="tag">바이노럴 세타</span><span class="tag">바이노럴 알파</span><span class="tag">바이노럴 베타</span><span class="tag">화이트노이즈</span><span class="tag">핑크노이즈</span><span class="tag">브라운노이즈</span></div></div></div>
+  </div>
+
+  <h3 style="margin:56px 0 6px;font-size:24px">재미있는 훈련</h3>
+  <p class="sub" style="margin-bottom:22px">겨루고, 함께하고, 메달을 모으며 훈련을 즐겁게 이어 갑니다.</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
+    <div class="card" id="tr-tier"><div class="n">BATTLE</div><h3>대결</h3><p>뇌파 줄다리기로 1:1 대결을 하고, 아이언부터 챌린저까지 티어를 올립니다.</p></div>
+    <div class="card" id="tr-team"><div class="n">TEAM</div><h3>팀 훈련</h3><p>친구들과 한 팀이 되어 함께 훈련하고, 팀으로 겨룹니다.</p></div>
+    <div class="card" id="tr-olympic"><div class="n">OLYMPICS</div><h3>뇌파 올림픽</h3><p>양궁, 사격, 역도, 100m, 마라톤 같은 올림픽 종목을 게임으로 즐기고 메달을 모읍니다.</p></div>
+  </div>
+</div></section>
+
+<section id="kit"><div class="w">
+  <div class="eyebrow">PRODUCT</div>
+  <h2>DIY 키트에서 완성품까지</h2>
+  <p class="sub">메이커스 시대, 내 손으로 직접 만들어 보는 DIY 키트 '브레인 메이커스'도 생산·판매합니다. 바로 쓰는 완성품과 함께, 연결 방식에 따라 유선과 무선 중에서 고를 수 있습니다.</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+    <div class="card hl"><div class="n">DIY 키트 · 먼저 출시</div><h3>브레인 메이커스 유선 버전</h3><p>학생이 직접 조립합니다. C타입 케이블로 폰에 연결하고 폰 전원을 써서 배터리가 필요 없습니다. 더 저렴하며 안드로이드 폰 위주입니다.</p></div>
+    <div class="card hl"><div class="n">DIY 키트 · 먼저 출시</div><h3>브레인 메이커스 무선 버전</h3><p>학생이 직접 조립합니다. 블루투스로 연결되어 안드로이드와 아이폰 모두 사용할 수 있습니다.</p></div>
+    <div class="card"><div class="n">완성품 · 준비 중</div><h3>브레인 밴드 유선 버전</h3><p>조립 없이 바로 쓰는 헤어밴드와 앱. 케이블로 연결합니다.</p></div>
+    <div class="card"><div class="n">완성품 · 준비 중</div><h3>브레인 밴드 무선 버전</h3><p>조립 없이 바로 쓰는 헤어밴드와 앱. 블루투스로 연결합니다.</p></div>
+  </div>
+  <h3 style="margin:34px 0 8px;font-size:17px">키트 구성</h3>
+  <div class="tags" style="margin-top:0"><span class="tag">스판 헤어밴드</span><span class="tag">전극 3개 · 이마 좌우 + 귀 뒤 기준</span><span class="tag">뇌파 칩 보드</span><span class="tag">전선과 연결 부품</span><span class="tag">귀 클립 전극</span><span class="tag">납땜 없음</span></div>
+  <p class="note">앱은 안드로이드와 아이폰 모두 지원하도록 하나로 만듭니다. 수업에서는 폰이 없는 학생을 위해 수업용 스마트폰을 준비합니다.</p>
+</div></section>
+
+<section id="download" class="alt"><div class="w">
+  <div class="eyebrow">DOWNLOAD</div>
+  <h2>어디서나, 나의 집중을 확인하세요</h2>
+  <p class="sub">PC, 안드로이드, 아이폰에서 같은 계정으로 사용합니다.</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
+    <div class="card hl"><div class="n">PC</div><h3>PC 버전</h3><p>큰 화면으로 실시간 뇌파를 보고, 수업과 훈련에 사용합니다.</p><div class="tags"><span class="tag">Windows</span></div><div style="margin-top:16px"><a class="btn ghost sm" href="#contact">출시 알림 받기</a> <span class="tag">준비 중</span></div></div>
+    <div class="card hl"><div class="n">ANDROID</div><h3>안드로이드</h3><p>유선과 무선 버전 모두 연결해 사용할 수 있습니다.</p><div class="tags"><span class="tag">Google Play</span></div><div style="margin-top:16px"><a class="btn ghost sm" href="#contact">출시 알림 받기</a> <span class="tag">준비 중</span></div></div>
+    <div class="card hl"><div class="n">IPHONE</div><h3>아이폰</h3><p>블루투스로 연결하는 무선 버전과 함께 사용합니다.</p><div class="tags"><span class="tag">App Store</span></div><div style="margin-top:16px"><a class="btn ghost sm" href="#contact">출시 알림 받기</a> <span class="tag">준비 중</span></div></div>
+  </div>
+</div></section>
+
+<section id="class" class="alt"><div class="w">
+  <div class="eyebrow">CLASS</div>
+  <h2>학생이 직접 만드는 뇌파 수업</h2>
+  <p class="sub">중고등학생 대상 · 1차시 45분 · 트랙별 4차시. 만들고(메이커), 코딩하고(코딩), 체험합니다(훈련).</p>
+  <div class="grid" style="margin-bottom:28px">
+    <div class="card"><div class="n">MAKER</div><h3>직접 조립</h3><p>시중 스판 헤어밴드에 전선을 밀어 넣고 똑딱이 전극을 끼웁니다. 납땜 없이 수업 시간 안에.</p></div>
+    <div class="card"><div class="n">CODING</div><h3>스크래치 코딩</h3><p>스크래치와 똑같이 생긴 터보워프에 '뇌파 블록'을 더했습니다. 집중하면 풍선이 올라가는 게임부터.</p></div>
+    <div class="card"><div class="n">BATTLE</div><h3>반 대항전</h3><p>두 사람 수치로 줄다리기 대결을 만들고, 마지막 시간에 반 평균으로 승부합니다.</p></div>
+  </div>
+  <table>
+    <tr><th>운영 형태</th><th>구성</th></tr>
+    <tr><td><b>하루 체험</b> 2차시</td><td>메이커 1 + 코딩 2 → 내 뇌파 보고 풍선 띄우기</td></tr>
+    <tr><td><b>트랙 선택</b> 4차시</td><td>메이커 · 코딩 · 발명 중 하나</td></tr>
+    <tr><td><b>학기 과정</b> 12차시</td><td>메이커 → 코딩 → 발명, 마지막에 반 대항 뇌파 올림픽</td></tr>
+    <tr><td><b>확장 과정</b> 20차시</td><td>뇌과학 → 신호 → 메이커 → 코딩 → 발명</td></tr>
+  </table>
+  <p class="note">교과 연계: 뇌과학은 과학(생명), 신호는 과학(물리)·기술, 메이커·발명은 기술·가정, 코딩은 정보</p>
+</div></section>
+
+<section id="faq"><div class="w" style="max-width:760px">
+  <div class="eyebrow">FAQ</div>
+  <h2>자주 묻는 질문</h2>
+  <div style="margin-top:28px">
+    <details><summary>유선과 무선은 무엇이 다른가요?</summary><p>유선은 C타입 케이블로 폰에 연결하고 폰 전원을 써서 배터리가 필요 없으며 더 저렴합니다. 안드로이드 폰 위주입니다. 무선은 블루투스로 연결되어 안드로이드와 아이폰 모두 사용할 수 있습니다.</p></details>
+    <details><summary>스마트폰이 없는 학생은 어떻게 하나요?</summary><p>수업용 스마트폰을 준비해 가기 때문에 폰이 없는 학생도 함께할 수 있습니다.</p></details>
+    <details><summary>납땜이 필요한가요?</summary><p>필요 없습니다. 커넥터로 연결하고, 스판 헤어밴드에 전선을 밀어 넣은 뒤 똑딱이 전극을 끼우면 됩니다.</p></details>
+    <details><summary>수업에서 어디까지 쓸 수 있나요?</summary><p>조립, 코딩, 내 뇌파 보기까지 열립니다. 마이 사운드와 월간 테스트, 뇌 변화 기록은 앱 구독으로 이용합니다.</p></details>
+  </div>
+</div></section>
+
+<section id="contact" class="alt"><div class="w center">
+  <div class="eyebrow">CONTACT</div>
+  <h2>수업·키트 문의</h2>
+  <p class="sub">남겨 주시면 연락드리겠습니다.</p>
+  <form id="f" style="text-align:left">
+    <label>학교 / 기관명<input name="org" required></label>
+    <label>담당자 성함<input name="name" required></label>
+    <label>연락처 (이메일 또는 전화)<input name="contact" required></label>
+    <label>관심 있는 제품<select name="track"><option>브레인 메이커스 유선 버전</option><option>브레인 메이커스 무선 버전</option><option>브레인 밴드 (출시 알림)</option><option>앱 출시 알림 (PC · 안드로이드 · 아이폰)</option><option>수업 문의 (하루 체험)</option><option>수업 문의 (학기 과정)</option><option>잘 모르겠어요</option></select></label>
+    <label>대상 학년 / 인원<input name="who" placeholder="예: 중1 2개 반, 약 50명"></label>
+    <label>문의 내용<textarea name="msg"></textarea></label>
+    <button class="btn" type="submit" style="justify-content:center">문의 보내기</button>
+    <div id="sent">접수됐어요. 곧 연락드리겠습니다.</div>
+  </form>
+  <p class="note" id="setup">⚠ 문의 폼은 아직 연결 전입니다. 파일 안 FORM_URL에 구글폼 주소를 넣으면 작동합니다.</p>
+</div></section>
+
+<footer><div class="w">BRAIN SOUND · 뇌파를 연구하는 회사 · 나의 뇌에 맞는 집중 사운드를 찾아주는</div></footer>
+
+<script>
+// 미리보기 화면에서도 #링크가 동작하도록 직접 스크롤
+document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+  const t = document.getElementById(a.getAttribute('href').slice(1));
+  if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}));
+
+// 문의 연결: 구글폼 등의 formResponse 주소를 넣으세요
+const FORM_URL = '';
+document.getElementById('f').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!FORM_URL) { alert('아직 문의 받는 곳이 연결되지 않았어요 (관리자 설정 필요).'); return; }
+  const data = Object.fromEntries(new FormData(e.target));
+  try { await fetch(FORM_URL, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(data) }); } catch {}
+  e.target.querySelector('button').style.display = 'none'; document.getElementById('sent').style.display = 'block';
+});
+if (FORM_URL) document.getElementById('setup').style.display = 'none';
+</script>
+<script>
+(function(){
+  const bar=document.getElementById('progress');
+  addEventListener('scroll',()=>{const h=document.documentElement;bar.style.width=(100*h.scrollTop/(h.scrollHeight-h.clientHeight))+'%';},{passive:true});
+  const els=document.querySelectorAll('.card,.st,section h2,section .sub,details,form,table');
+  els.forEach((e,i)=>{e.classList.add('rv');e.style.transitionDelay=((i%4)*80)+'ms';});
+  const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target);}}),{threshold:.12});
+  els.forEach(e=>io.observe(e));
+  const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  // 배경 뇌파
+  const cv=document.getElementById('heroWave');
+  if(cv){const cx=cv.getContext('2d');
+    (function draw(t){
+      const dpr=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+      if(cv.width!==w*dpr){cv.width=w*dpr;cv.height=h*dpr;}
+      cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,w,h);
+      const cols=['rgba(110,140,255,','rgba(160,110,255,','rgba(110,231,255,','rgba(255,138,87,'];
+      for(let k=0;k<7;k++){cx.beginPath();
+        for(let x=0;x<=w;x+=6){const u=x/w,a=t/1800+k*.6;
+          const y=h*(.62+k*.045)+Math.sin(u*9+a)*14+Math.sin(u*23+a*1.7)*7+Math.sin(u*4-a*.6)*20*(.4+u);
+          x?cx.lineTo(x,y):cx.moveTo(x,y);}
+        cx.strokeStyle=cols[k%4]+(.10+k*.035)+')';cx.lineWidth=1.2;cx.stroke();}
+      if(!still)requestAnimationFrame(draw);
+    })(0);}
+
+  // 스마트폰: 4개 화면 자동 전환 + 단계 카드 연동
+  const pgs=[...document.querySelectorAll('.pg')],dots=[...document.querySelectorAll('.pdots i')],steps=[...document.querySelectorAll('#program .st')];
+  let cur=0,timer=null;
+  function show(i){
+    cur=i;pgs.forEach((p,k)=>p.classList.toggle('on',k===i));dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+    steps.forEach((s,k)=>s.classList.toggle('act',k===i));
+    if(i===2){document.querySelectorAll('.snd').forEach((e,k)=>{const f=e.querySelector('i');f.style.width='0';setTimeout(()=>f.style.width=e.dataset.v+'%',250+k*350);});}
+  }
+  function auto(){clearInterval(timer);if(still)return;timer=setInterval(()=>show((cur+1)%pgs.length),4200);}
+  dots.forEach((d,k)=>d.addEventListener('click',()=>{show(k);auto();}));
+  steps.forEach((s,k)=>{s.style.cursor='pointer';s.addEventListener('mouseenter',()=>{show(k);auto();});s.addEventListener('click',()=>{show(k);auto();});});
+  show(0);auto();
+
+  // 폰 안 실시간 뇌파
+  const pw=document.getElementById('phWave');
+  if(pw){const c2=pw.getContext('2d');
+    (function d2(t){
+      const dpr=devicePixelRatio||1,w=pw.clientWidth,h=pw.clientHeight;
+      if(w&&pw.width!==w*dpr){pw.width=w*dpr;pw.height=h*dpr;}
+      c2.setTransform(dpr,0,0,dpr,0,0);c2.clearRect(0,0,w,h);
+      [['#6b9cff',h*.3,0],['#ff8a57',h*.7,1.3]].forEach(([col,mid,ph])=>{
+        c2.strokeStyle=col;c2.lineWidth=1.3;c2.beginPath();
+        for(let x=0;x<w;x+=2){const s=x/22+t/380+ph;
+          const y=mid-7*Math.sin(s*3.1)-5*Math.sin(s*5.7+1)-3*Math.sin(s*11);x?c2.lineTo(x,y):c2.moveTo(x,y);}
+        c2.stroke();});
+      if(!still)requestAnimationFrame(d2);
+    })(0);
+    setInterval(()=>{document.getElementById('pF').textContent=Math.round(78+Math.random()*9)+'%';document.getElementById('pR').textContent=Math.round(38+Math.random()*8)+'%';},900);}
+})();
+</script>
+<script>
+(function(){
+  const sec=document.getElementById('dive'),cv=document.getElementById('diveCv'); if(!sec||!cv) return;
+  const cx=cv.getContext('2d'),cap=document.getElementById('diveCap'),hint=document.getElementById('diveHint');
+  const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const R=(a,b)=>a+Math.random()*(b-a), cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const sm=(a,b,v)=>{const t=cl((v-a)/(b-a),0,1);return t*t*(3-2*t);};
+
+  // ---- 뇌 점 구름 (좌우 반구) ----
+  // ---- 뇌 모양 (옆모습 윤곽 + 두께 + 주름 선) ----
+  const CER=[[-.78,.12],[-.95,-.05],[-.98,-.3],[-.85,-.55],[-.55,-.72],[-.15,-.78],[.3,-.72],[.7,-.52],[.92,-.2],[.95,.05],[.85,.2],[.6,.26],[.4,.3],[.46,.42],[.3,.5],[.0,.5],[-.2,.4],[-.36,.28],[-.56,.22]];
+  const STEM=[[-.3,.3],[-.14,.3],[-.08,.66],[-.2,.7]];
+  const CB={c:[-.6,.4],r:[.3,.17]};
+  function inPoly(poly,z,y){let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a[1]>y)!==(b[1]>y)&&z<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])c=!c;}return c;}
+  function edgeD(poly,z,y){let m=9;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[j],b=poly[i],dx=b[0]-a[0],dy=b[1]-a[1];let t=((z-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy);t=Math.max(0,Math.min(1,t));const d=Math.hypot(z-(a[0]+t*dx),y-(a[1]+t*dy));if(d<m)m=d;}return m;}
+  const thick=(d,hw)=>hw*Math.sqrt(Math.max(0,1-Math.pow(1-Math.min(d/.34,1),2)));
+  const part=(z,y)=>inPoly(CER,z,y)?0:(((z-CB.c[0])/CB.r[0])**2+((y-CB.c[1])/CB.r[1])**2<1?1:(inPoly(STEM,z,y)?2:-1));
+  function surfX(z,y,sg){const k=part(z,y);if(k<0)return null;
+    if(k===0)return sg*(.025+thick(edgeD(CER,z,y),.44)*R(.97,1));
+    if(k===1){const d=1-Math.sqrt(((z-CB.c[0])/CB.r[0])**2+((y-CB.c[1])/CB.r[1])**2);return sg*(.02+thick(d*.34,.3));}
+    return sg*(.01+thick(edgeD(STEM,z,y),.09));}
+  const pts=[],edges=[];
+  function add(z,y,sg,big){const x=surfX(z,y,sg);if(x===null)return -1;pts.push({x:x,y:y,z:z,f:0,big:!!big});return pts.length-1;}
+  // 흩뿌린 점
+  for(let i=0;i<520;i++){const z=R(-1,1),y=R(-.8,.75),sg=Math.random()<.5?1:-1;add(z,y,sg,false);}
+  // 주름 선 (이랑·고랑)
+  for(let n=0;n<130;n++){
+    const sg=n%2?1:-1;let z=R(-.95,.95),y=R(-.75,.5),th=R(0,6.28),prev=-1;
+    for(let k=0;k<R(10,22);k++){
+      th+=R(-.75,.75);z+=Math.cos(th)*.05;y+=Math.sin(th)*.05;
+      const id=add(z,y,sg,false);if(id<0)break;if(prev>=0)edges.push([prev,id,1]);prev=id;}
+  }
+  // 소뇌 줄무늬
+  for(let n=0;n<14;n++){const sg=n%2?1:-1;let z=CB.c[0]-.27,y=CB.c[1]+R(-.14,.14),prev=-1;for(let k=0;k<12;k++){z+=.048;y+=R(-.012,.012);const id=add(z,y,sg,false);if(id<0)break;if(prev>=0)edges.push([prev,id,1]);prev=id;}}
+  // 뇌간
+  for(let i=0;i<40;i++)add(R(-.26,-.1),R(.32,.66),Math.random()<.5?1:-1,false);
+  // 이웃 연결 (약하게)
+  const N=pts.length;
+  for(let i=0;i<N;i++){const d=[];for(let j=0;j<N;j++){if(i===j)continue;const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,dz=pts[i].z-pts[j].z;d.push([dx*dx+dy*dy+dz*dz,j]);}
+    d.sort((a,b)=>a[0]-b[0]);for(let k=0;k<2;k++)if(d[k][0]<.012&&i<d[k][1])edges.push([i,d[k][1],0]);}
+  for(let i=0;i<90;i++)pts[Math.random()*N|0].big=true;
+  // ---- 빛 입자 구름 (옴니핏처럼 수천 개) ----
+  const DN=7500,bx=new Float32Array(DN),by=new Float32Array(DN),bz=new Float32Array(DN),sd=new Float32Array(DN);
+  for(let i=0;i<DN;i++){const q=pts[Math.random()*N|0];bx[i]=q.x+R(-1,1)*.04;by[i]=q.y+R(-1,1)*.04;bz[i]=q.z+R(-1,1)*.04;sd[i]=R(0,6.283);}
+  const DCOL=['rgb(120,150,255)','rgb(110,231,255)','rgb(240,247,255)'];
+  const pulses=[];
+  // 별
+  const stars=[];for(let i=0;i<420;i++)stars.push({x:R(-9,9),y:R(-9,9),z:R(-9,3),c:Math.random()<.2});
+  // 신호 입자 (폰으로 모임)
+  const flow=[];for(let i=0;i<170;i++)flow.push({a:R(0,6.283),r:R(.55,1.15),t:Math.random(),sp:R(.004,.009)});
+
+  let W=0,H=0,dpr=1;
+  function size(){dpr=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);}
+  size();addEventListener('resize',size);
+
+  let ps=0,lastCam=-7,on=true;
+  new IntersectionObserver(e=>{on=e[0].isIntersecting;if(on)requestAnimationFrame(frame);}).observe(sec);
+  const CAPS=[[0,.2,'내가 집중하고 싶은 순간,','뇌 속에서는 무슨 일이 벌어지고 있을까요?'],[.2,.44,'뇌 속으로 빨려 들어갑니다','수많은 뉴런이 서로를 자극하며 전기 신호를 주고받습니다'],[.44,.62,'뉴런이 신호를 만들어 냅니다','이마의 헤어밴드가 그 신호를 읽어 냅니다'],[.66,1.01,'그리고 스마트폰에서,','나의 집중 상태가 됩니다']];
+  function setCap(p){let h='',op=0;for(const c of CAPS){if(p>=c[0]&&p<c[1]){h='<span>'+c[2]+'</span><small>'+c[3]+'</small>';const e=Math.min(sm(c[0],c[0]+.04,p),1-sm(c[1]-.04,c[1],p));op=e;}}
+    if(cap.dataset.k!==h){cap.innerHTML=h;cap.dataset.k=h;}cap.style.opacity=op;hint.style.visibility=p<.03?'visible':'hidden';}
+
+  function head(camZ,alpha){
+    if(alpha<=.01)return;const f=H*.9,dz=-camZ;if(dz<.5)return;const k=f/dz*1.7;
+    cx.save();cx.translate(W/2-k*.05,H/2+k*.32);cx.scale(k,k);cx.globalAlpha=alpha;
+    cx.beginPath();cx.moveTo(-.55,1.15);cx.bezierCurveTo(-.95,.7,-1.05,-.35,-.7,-.8);cx.bezierCurveTo(-.4,-1.15,.35,-1.2,.7,-.8);
+    cx.bezierCurveTo(.88,-.58,.9,-.3,.86,0);cx.lineTo(1.02,.28);cx.lineTo(.86,.34);cx.bezierCurveTo(.88,.6,.8,.8,.55,.88);cx.lineTo(.5,1.15);
+    const g=cx.createLinearGradient(0,-1.2,0,1.15);g.addColorStop(0,'rgba(110,140,255,.20)');g.addColorStop(1,'rgba(110,140,255,.02)');cx.fillStyle=g;cx.fill();
+    cx.strokeStyle='rgba(143,155,255,.7)';cx.lineWidth=2/k*1.2;cx.stroke();cx.restore();
+  }
+  function phone(x,y,w,h,t){
+    cx.save();cx.shadowColor='rgba(74,92,255,.7)';cx.shadowBlur=50;cx.beginPath();cx.roundRect(x,y,w,h,26);cx.fillStyle='#10163a';cx.fill();cx.restore();
+    cx.strokeStyle='rgba(255,255,255,.22)';cx.lineWidth=1.5;cx.beginPath();cx.roundRect(x,y,w,h,26);cx.stroke();
+    cx.beginPath();cx.roundRect(x+7,y+7,w-14,h-14,20);cx.fillStyle='#070b22';cx.fill();
+    cx.fillStyle='#000';cx.beginPath();cx.roundRect(x+w/2-25,y+13,50,11,5);cx.fill();
+    cx.fillStyle='#8f9bff';cx.font='700 9px sans-serif';cx.textAlign='left';cx.fillText('실시간 뇌파',x+18,y+46);
+    [['#6b9cff',y+72,0],['#ff8a57',y+108,1.3]].forEach(([c,m,ph])=>{cx.strokeStyle=c;cx.lineWidth=1.3;cx.beginPath();for(let i=0;i<=w-36;i+=2){const q=i/12+t/380+ph;const yy=m-7*Math.sin(q*3.1)-4.5*Math.sin(q*5.7+1)-2.5*Math.sin(q*11);i?cx.lineTo(x+18+i,yy):cx.moveTo(x+18+i,yy);}cx.stroke();});
+    const gx=x+w/2,gy=y+h*.58,gr=46,v=.8+Math.sin(t/900)*.05;
+    cx.lineWidth=9;cx.lineCap='round';cx.strokeStyle='rgba(255,255,255,.1)';cx.beginPath();cx.arc(gx,gy,gr,Math.PI*.8,Math.PI*2.2);cx.stroke();
+    const gg=cx.createLinearGradient(gx-gr,gy,gx+gr,gy);gg.addColorStop(0,'#6b9cff');gg.addColorStop(1,'#6ee7ff');cx.strokeStyle=gg;cx.beginPath();cx.arc(gx,gy,gr,Math.PI*.8,Math.PI*(.8+1.4*v));cx.stroke();
+    cx.fillStyle='#fff';cx.font='800 26px sans-serif';cx.textAlign='center';cx.fillText(Math.round(v*100)+'%',gx,gy+9);cx.fillStyle='#8f9bff';cx.font='700 9px sans-serif';cx.fillText('집중',gx,gy-16);
+    for(let i=0;i<9;i++){const hh=8+Math.abs(Math.sin(t/260+i*.8))*30;const g2=cx.createLinearGradient(0,y+h-48-hh,0,y+h-48);g2.addColorStop(0,'#6ee7ff');g2.addColorStop(1,'#3b4fe0');cx.fillStyle=g2;cx.beginPath();cx.roundRect(x+22+i*14.5,y+h-48-hh+10,9,hh,3);cx.fill();}
+    cx.fillStyle='#9aa4c2';cx.font='600 9px sans-serif';cx.fillText('마이 사운드 재생 중',gx,y+h-18);
+  }
+
+  function frame(ts){
+    if(!on)return;
+    if(cv.width!==Math.round(cv.clientWidth*dpr))size();
+    const top=sec.getBoundingClientRect().top,span=sec.offsetHeight-innerHeight;
+    const target=still?.95:cl(-top/span,0,1);
+    ps+=(target-ps)*(still?1:.07);const p=ps;
+    cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,W,H);
+    const bg=cx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*.7);bg.addColorStop(0,'#0a1230');bg.addColorStop(1,'#02040c');cx.fillStyle=bg;cx.fillRect(0,0,W,H);
+    setCap(p);
+
+    // 카메라: 점점 빨라지며 빨려 들어감
+    const u=cl(p/.56,0,1),camZ=-4.2+4.9*Math.pow(u,1.7),vel=camZ-lastCam;lastCam=camZ;
+    const f=H*.9,cxm=W/2,cym=H/2,ang=1.45+Math.sin(ts*.0005)*.3+p*.9,ca=Math.cos(ang),sa=Math.sin(ang);
+    const sceneA=1-sm(.56,.7,p);
+
+    // 별 + 속도선
+    if(sceneA>0){
+      for(const st of stars){let z=st.z; z=((z-camZ+9)%12+12)%12-9+camZ; const dz=z-camZ; if(dz<.15)continue;
+        const sx=cxm+st.x*f/dz*.6,sy=cym+st.y*f/dz*.6,al=cl(1.4/dz,0,1)*sceneA*.9;
+        cx.strokeStyle=st.c?'rgba(255,170,130,'+al+')':'rgba(180,200,255,'+al+')';cx.lineWidth=cl(.5+1.2/dz,.4,2.2);
+        const dz2=dz+vel*14+0.001;cx.beginPath();cx.moveTo(sx,sy);if(dz2>.15&&vel>.01){cx.lineTo(cxm+st.x*f/dz2*.6,cym+st.y*f/dz2*.6);}else cx.lineTo(sx+.01,sy);cx.stroke();}
+    }
+    {const dz0=-camZ;if(dz0>.6){const rr=f/dz0*1.5,g=cx.createRadialGradient(W/2,H/2,0,W/2,H/2,rr);g.addColorStop(0,'rgba(74,92,255,'+(.3*sceneA*(1-sm(.1,.3,p)))+')');g.addColorStop(1,'rgba(74,92,255,0)');cx.fillStyle=g;cx.fillRect(0,0,W,H);}}
+
+    // 뇌 점·연결
+    if(sceneA>0){
+      {const cg=cx.createRadialGradient(cxm,cym,0,cxm,cym,Math.min(W,H)*.55);const ca2=.3*sm(-4.3,-.4,camZ)*sceneA;cg.addColorStop(0,'rgba(210,230,255,'+ca2+')');cg.addColorStop(.35,'rgba(90,130,255,'+ca2*.5+')');cg.addColorStop(1,'rgba(90,130,255,0)');cx.fillStyle=cg;cx.fillRect(0,0,W,H);}
+      cx.globalCompositeOperation='lighter';
+      for(let i=0;i<DN;i++){
+        const x0=bx[i]+Math.sin(ts*.0006+sd[i])*.02,y0=by[i]+Math.cos(ts*.0005+sd[i]*1.3)*.02,z0=bz[i]+Math.sin(ts*.0004+sd[i]*.7)*.02;
+        const xr=x0*ca+z0*sa,zr=-x0*sa+z0*ca,dz=zr-camZ;if(dz<.1)continue;
+        const kk=f/dz,sx=cxm+xr*kk,sy=cym+y0*kk;if(sx<-10||sx>W+10||sy<-10||sy>H+10)continue;
+        const g=i%6<3?0:(i%6<5?1:2);
+        cx.fillStyle=DCOL[g];cx.globalAlpha=cl(1.6/dz,0,.9)*sceneA*(.35+.65*((sd[i]*3)%1));
+        const sz=cl(.0042*kk,.8,3.4);cx.fillRect(sx,sy,sz,sz);
+      }
+      cx.globalAlpha=1;cx.globalCompositeOperation='source-over';
+      const proj=pts.map(q=>{const xr=q.x*ca+q.z*sa,zr=-q.x*sa+q.z*ca,dz=zr-camZ;return dz>.12?{x:cxm+xr*f/dz,y:cym+q.y*f/dz,dz,q}:null;});
+      cx.lineWidth=.8;
+      for(const e of edges){const a=proj[e[0]],b=proj[e[1]];if(!a||!b)continue;const al=cl(1.8/a.dz,0,.6)*sceneA*(e[2]?.55:.18);cx.strokeStyle='rgba(143,170,255,'+al*.85+')';cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke();}
+      for(const a of proj){if(!a)continue;const q=a.q;q.f*=.93;const r=cl(.012*f/a.dz,.6,q.big?9:5),al=cl(1.7/a.dz,0,1)*sceneA;
+        if(q.big||q.f>.05){const gr=r*(q.big?5:4);const g=cx.createRadialGradient(a.x,a.y,0,a.x,a.y,gr);g.addColorStop(0,'rgba(110,231,255,'+(.25+q.f*.55)*al+')');g.addColorStop(1,'rgba(110,231,255,0)');cx.fillStyle=g;cx.beginPath();cx.arc(a.x,a.y,gr,0,7);cx.fill();}
+        cx.fillStyle='rgba('+(q.big?'200,230,255':'160,180,255')+','+(.45+q.f*.5)*al+')';cx.beginPath();cx.arc(a.x,a.y,r+q.f*2,0,7);cx.fill();}
+      // 펄스
+      if(!still)for(let i=0;i<7;i++){const e=edges[Math.random()*edges.length|0];pulses.push({a:e[0],b:e[1],t:0,sp:R(.025,.06)});}
+      for(let i=pulses.length-1;i>=0;i--){const q=pulses[i];q.t+=q.sp;if(q.t>=1){pts[q.b].f=1;pulses.splice(i,1);continue;}
+        const A=pts[q.a],B=pts[q.b],x=A.x+(B.x-A.x)*q.t,y=A.y+(B.y-A.y)*q.t,z=A.z+(B.z-A.z)*q.t;
+        const xr=x*ca+z*sa,zr=-x*sa+z*ca,dz=zr-camZ;if(dz<.12)continue;
+        const sx=cxm+xr*f/dz,sy=cym+y*f/dz,al=cl(1.8/dz,0,1)*sceneA;cx.fillStyle='rgba(255,255,255,'+al+')';cx.shadowColor='#6ee7ff';cx.shadowBlur=10;cx.beginPath();cx.arc(sx,sy,cl(.01*f/dz,1,4.5),0,7);cx.fill();cx.shadowBlur=0;}
+      if(pulses.length>420)pulses.splice(0,pulses.length-420);
+    }
+
+    // 신호가 폰으로 모여든다
+    const fa=sm(.58,.72,p);
+    if(fa>0){
+      const Rr=Math.max(W,H)*.62;
+      for(const q of flow){q.t+=q.sp;if(q.t>1)q.t-=1;const k=Math.pow(1-q.t,1.7),sw=q.a+q.t*2.2,x=cxm+Math.cos(sw)*Rr*q.r*k,y=cym+Math.sin(sw)*Rr*q.r*k*.7;
+        const al=Math.sin(q.t*Math.PI)*fa;cx.fillStyle='rgba(110,231,255,'+al+')';cx.shadowColor='#6ee7ff';cx.shadowBlur=8;cx.beginPath();cx.arc(x,y,1+al*2.2,0,7);cx.fill();cx.shadowBlur=0;}
+    }
+    // 스마트폰 등장
+    const pa=sm(.66,.84,p);
+    if(pa>0){const sc=Math.min(H*.64/330,1.55)*(.55+.45*pa);cx.save();cx.globalAlpha=pa;cx.translate(cxm,cym-H*.03);cx.scale(sc,sc);phone(-74,-165,148,330,ts);cx.restore();}
+
+    if(!still)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

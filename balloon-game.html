@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>브레인 사운드 - 풍선 띄우기</title>
+<style>
+  :root { --bg:#eef4fb; --card:#fff; --ink:#1d2330; --muted:#6b7280; --line:#e3e6eb; --main:#2f6fdf; --ok:#1f9d55; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#12151b; --card:#1b2029; --ink:#e8ebf0; --muted:#9aa3b2; --line:#2c3340; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif; }
+  header { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 16px; background:var(--card); border-bottom:1px solid var(--line); }
+  header h1 { font-size:18px; margin:0 12px 0 0; }
+  button { font:inherit; font-size:14px; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; }
+  button.primary { background:var(--main); border-color:var(--main); color:#fff; }
+  button.on { background:var(--ok); border-color:var(--ok); color:#fff; }
+  button:disabled { opacity:.45; cursor:default; }
+  #status { font-size:13px; color:var(--muted); margin-left:auto; }
+  .wrap { max-width:900px; margin:14px auto; padding:0 16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; }
+  canvas { width:100%; display:block; border-radius:12px; background:linear-gradient(#9ed3ff,#e6f5ff); }
+  .row { display:flex; flex-wrap:wrap; gap:12px; align-items:center; font-size:14px; }
+  .hint { font-size:13px; color:var(--muted); line-height:1.6; margin:6px 0 0; }
+  input[type=range] { width:180px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎈 풍선 띄우기</h1>
+  <button id="btnConnect" class="primary">아두이노 연결</button>
+  <button id="btnDemo">데모 (스페이스바 = 집중)</button>
+  <button id="btnCal" disabled>기준 잡기 (15초)</button>
+  <span id="status">연결 안 됨</span>
+</header>
+<div class="wrap">
+  <canvas id="game" height="460"></canvas>
+  <div class="card">
+    <div class="row">
+      <label>쉬움 ↔ 어려움 (기준선) <input type="range" id="thr" min="80" max="160" value="100"></label>
+      <b id="thrV">100%</b>
+      <span>집중 <b id="fNow">–</b></span>
+      <span>최고 높이 <b id="best">0</b>m</span>
+    </div>
+    <p class="hint" id="msg">집중 지수가 기준선을 넘으면 풍선이 올라가고, 못 넘으면 천천히 내려옵니다. 처음엔 "기준 잡기"를 눌러 눈을 감고 15초 편하게 있으세요 (기준을 한 번 잡으면 저장됩니다).</p>
+  </div>
+</div>
+
+<script>
+const FS = 256, FFT_N = 512, BUF = FS * 4;
+const bufL = new Float32Array(BUF), bufR = new Float32Array(BUF);
+let widx = 0, total = 0, source = null, port = null, reader = null;
+const $ = id => document.getElementById(id);
+
+function pushSample(l, r) { bufL[widx] = l; bufR[widx] = r; widx = (widx + 1) % BUF; total++; }
+function lastN(buf, n) { const o = new Float32Array(n); for (let i = 0; i < n; i++) o[i] = buf[(widx - n + i + BUF) % BUF]; return o; }
+
+// ---------- 연결 ----------
+$('btnConnect').onclick = async () => {
+  if (!('serial' in navigator)) { alert('크롬(Chrome)이나 엣지(Edge)로 열어 주세요.'); return; }
+  if (port) { await disconnect(); return; }
+  try { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); }
+  catch (e) { port = null; $('status').textContent = '연결 취소됨'; return; }
+  stopDemo(); source = 'serial'; $('btnConnect').textContent = '연결 끊기'; start(); readLoop();
+};
+async function readLoop() {
+  const dec = new TextDecoderStream(); const closed = port.readable.pipeTo(dec.writable).catch(() => {});
+  reader = dec.readable.getReader(); let pend = '';
+  try { while (true) {
+    const { value, done } = await reader.read(); if (done) break;
+    pend += value; const lines = pend.split('\n'); pend = lines.pop();
+    for (const ln of lines) { const p = ln.trim().split(','); if (p.length < 2) continue;
+      const l = parseFloat(p[0]), r = parseFloat(p[1]); if (Number.isFinite(l) && Number.isFinite(r)) pushSample(l, r); }
+  } } catch (e) { $('status').textContent = '연결이 끊겼어요'; }
+  await closed;
+}
+async function disconnect() {
+  try { if (reader) await reader.cancel(); } catch {} try { await port.close(); } catch {}
+  port = null; reader = null; source = null; $('btnConnect').textContent = '아두이노 연결'; $('btnCal').disabled = true;
+  $('status').textContent = '연결 끊김';
+}
+
+// ---------- 데모 (키보드) ----------
+let demoTimer = null, demoT = 0, space = false, pinkL = 0, pinkR = 0;
+addEventListener('keydown', e => { if (e.code === 'Space') { space = true; e.preventDefault(); } });
+addEventListener('keyup', e => { if (e.code === 'Space') space = false; });
+$('btnDemo').onclick = () => {
+  if (demoTimer) { stopDemo(); source = null; $('status').textContent = '데모 종료'; return; }
+  if (port) disconnect();
+  source = 'demo'; $('btnDemo').classList.add('on'); start();
+  let last = performance.now(), carry = 0;
+  demoTimer = setInterval(() => {
+    const now = performance.now(); carry += (now - last) / 1000 * FS; last = now;
+    const n = Math.floor(carry); carry -= n;
+    for (let i = 0; i < n; i++) {
+      const t = demoT++ / FS, a = 14 * Math.sin(2 * Math.PI * 10 * t), b = (space ? 11 : 3) * (Math.sin(2 * Math.PI * 19 * t) + Math.sin(2 * Math.PI * 24 * t));
+      pinkL = 0.97 * pinkL + (Math.random() - .5) * 6; pinkR = 0.97 * pinkR + (Math.random() - .5) * 6;
+      pushSample(pinkL + a + b + (Math.random() - .5) * 3, pinkR + a + b + (Math.random() - .5) * 3);
+    }
+  }, 20);
+};
+function stopDemo() { if (!demoTimer) return; clearInterval(demoTimer); demoTimer = null; $('btnDemo').classList.remove('on'); }
+function start() { widx = 0; total = 0; bufL.fill(0); bufR.fill(0); smooth = null; height = 0; $('btnCal').disabled = false; }
+
+// ---------- FFT / 집중 지수 (뷰어와 같은 방식) ----------
+const hann = new Float32Array(FFT_N).map((_, i) => 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (FFT_N - 1)));
+function fftPower(sig) {
+  const n = FFT_N, re = new Float32Array(n), im = new Float32Array(n);
+  let m = 0; for (let i = 0; i < n; i++) m += sig[i]; m /= n;
+  for (let i = 0; i < n; i++) re[i] = (sig[i] - m) * hann[i];
+  for (let i = 1, j = 0; i < n; i++) { let bit = n >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit;
+    if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } }
+  for (let len = 2; len <= n; len <<= 1) { const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) { let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++) { const a = i + k, b = a + len / 2;
+        const tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        const nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr; } } }
+  const p = new Float32Array(n / 2); for (let k = 0; k < n / 2; k++) p[k] = re[k] * re[k] + im[k] * im[k]; return p;
+}
+function band(p, lo, hi) { const res = FS / FFT_N; let s = 0; for (let k = Math.ceil(lo / res); k < hi / res; k++) s += p[k]; return s; }
+let smooth = null, baseline = null, cal = null;
+try { const s = JSON.parse(localStorage.getItem('brainSoundBaseline')); if (s && s.focus) baseline = s.focus; } catch {}
+function focusRaw() {
+  if (total < FFT_N) return null;
+  const pl = fftPower(lastN(bufL, FFT_N)), pr = fftPower(lastN(bufR, FFT_N));
+  const t = band(pl, 4, 8) + band(pr, 4, 8), a = band(pl, 8, 13) + band(pr, 8, 13), b = band(pl, 13, 30) + band(pr, 13, 30);
+  return b / ((a + t) || 1);
+}
+setInterval(() => {
+  const f = source ? focusRaw() : null; if (f == null) return;
+  smooth = smooth == null ? f : smooth + 0.3 * (f - smooth);
+  if (cal) cal.push(f);
+}, 250);
+
+// ---------- 기준 잡기 ----------
+$('btnCal').onclick = () => {
+  if (cal) return; cal = []; let left = 15; $('btnCal').disabled = true;
+  const iv = setInterval(() => {
+    left--; $('msg').textContent = `눈을 감고 편하게… ${left}초`;
+    if (left <= 0) { clearInterval(iv);
+      const s = [...cal].sort((x, y) => x - y); baseline = s[Math.floor(s.length / 2)] || null; cal = null;
+      try { localStorage.setItem('brainSoundBaseline', JSON.stringify({ focus: baseline, relax: 0 })); } catch {}
+      $('btnCal').disabled = false; $('msg').textContent = '기준 저장됨 ✔ 이제 눈을 뜨고 집중해서 풍선을 띄워 보세요!'; }
+  }, 1000);
+  $('msg').textContent = '눈을 감고 편하게… 15초';
+};
+$('thr').oninput = () => $('thrV').textContent = $('thr').value + '%';
+
+// ---------- 게임 ----------
+const cv = $('game'), cx = cv.getContext('2d');
+let height = 0, bestH = 0, lastT = performance.now();
+const MAX_H = 100; // 미터
+function level() { // 기준 대비 %
+  if (smooth == null) return null;
+  if (!baseline) return 100 * smooth / 1.0; // 기준 없으면 지수 1.0을 기준으로 임시 사용
+  return 100 * smooth / baseline;
+}
+function draw(now) {
+  const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
+  const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = 460;
+  if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, w, h);
+  const lv = level(), thr = +$('thr').value;
+  if (lv != null && !cal) {
+    height += (lv >= thr ? Math.min(6, 1 + (lv - thr) / 15) : -2.5) * dt * 4;
+    height = Math.max(0, Math.min(MAX_H, height)); bestH = Math.max(bestH, height);
+  }
+  $('fNow').textContent = lv == null ? '–' : Math.round(lv) + '%'; $('best').textContent = Math.round(bestH);
+  const rate = source === 'serial' ? ' · 연결됨' : source === 'demo' ? ' · 데모' : '';
+  $('status').textContent = (source ? '실행 중' : '연결 안 됨') + rate;
+  // 구름 눈금
+  cx.fillStyle = 'rgba(255,255,255,.7)';
+  for (let i = 0; i < 5; i++) { const y = ((i * 110 + height * 6) % 560) - 50, x = (i * 197) % w; cx.beginPath(); cx.ellipse(x, y, 50, 16, 0, 0, 7); cx.fill(); }
+  // 풍선
+  const y = h - 70 - (height / MAX_H) * (h - 160), x = w / 2 + Math.sin(now / 700) * 8;
+  cx.strokeStyle = '#555'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(x, y + 34); cx.quadraticCurveTo(x - 8, y + 70, x, h - 20); cx.stroke();
+  cx.fillStyle = lv != null && lv >= thr ? '#e0602b' : '#8aa0c8';
+  cx.beginPath(); cx.ellipse(x, y, 28, 34, 0, 0, 7); cx.fill();
+  cx.beginPath(); cx.moveTo(x - 5, y + 34); cx.lineTo(x + 5, y + 34); cx.lineTo(x, y + 42); cx.fill();
+  cx.fillStyle = '#1d2330'; cx.font = 'bold 16px sans-serif'; cx.textAlign = 'left';
+  cx.fillText(Math.round(height) + ' m', 14, 28);
+  // 집중 게이지 (기준선 표시)
+  const gx = w - 40, gy = 30, gh = h - 80, maxLv = 200;
+  cx.fillStyle = 'rgba(0,0,0,.12)'; cx.fillRect(gx, gy, 16, gh);
+  if (lv != null) { const f = Math.min(maxLv, lv) / maxLv * gh; cx.fillStyle = lv >= thr ? '#1f9d55' : '#6b7280'; cx.fillRect(gx, gy + gh - f, 16, f); }
+  const ty = gy + gh - thr / maxLv * gh; cx.strokeStyle = '#e0602b'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(gx - 6, ty); cx.lineTo(gx + 22, ty); cx.stroke();
+  if (!source) { cx.fillStyle = '#1d2330'; cx.textAlign = 'center'; cx.font = '15px sans-serif'; cx.fillText('"아두이노 연결" 또는 "데모"를 눌러 시작하세요', w / 2, h / 2); }
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

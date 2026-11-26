@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>브레인 사운드 앱 목업</title>
+<style>
+  :root {
+    --bg:#f6f7f9; --card:#fff; --ink:#1d2330; --muted:#6b7280; --line:#e3e6eb;
+    --left:#2f6fdf; --right:#e0602b; --ok:#1f9d55; --warn:#c2410c;
+    --delta:#8b5cf6; --theta:#0ea5a4; --alpha:#22a34a; --beta:#e0602b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12151b; --card:#1b2029; --ink:#e8ebf0; --muted:#9aa3b2; --line:#2c3340; --left:#6b9cff; --right:#ff8a57; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#dfe3ea; font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif; color:var(--ink); }
+  @media (prefers-color-scheme: dark) { body { background:#0b0d11; } }
+  .phone { width:100%; max-width:390px; height:100vh; max-height:820px; margin:0 auto; background:var(--bg); display:flex; flex-direction:column; position:relative; overflow:hidden; }
+  @media (min-width:430px) { .phone { margin:16px auto; border-radius:28px; box-shadow:0 10px 40px rgba(0,0,0,.25); height:calc(100vh - 32px); } }
+  .top { padding:14px 16px 10px; background:var(--card); border-bottom:1px solid var(--line); display:flex; align-items:center; gap:8px; }
+  .top h1 { font-size:17px; margin:0; flex:1; }
+  .conn { font-size:12px; color:var(--muted); display:flex; align-items:center; gap:5px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--ok); }
+  main { flex:1; overflow-y:auto; padding:14px; }
+  .tabs { display:flex; background:var(--card); border-top:1px solid var(--line); }
+  .tabs button { flex:1; border:0; background:none; padding:10px 0 12px; font:inherit; font-size:11px; color:var(--muted); cursor:pointer; }
+  .tabs button b { display:block; font-size:20px; margin-bottom:2px; font-weight:400; }
+  .tabs button.on { color:var(--left); font-weight:700; }
+  section { display:none; } section.on { display:block; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px; }
+  h2 { font-size:15px; margin:0 0 8px; } h3 { font-size:13px; margin:0 0 6px; color:var(--muted); font-weight:600; }
+  .hint { font-size:12.5px; color:var(--muted); line-height:1.6; }
+  .btn { font:inherit; font-size:14px; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; }
+  .btn.primary { background:var(--left); border-color:var(--left); color:#fff; width:100%; }
+  .btn.sm { padding:6px 10px; font-size:12px; }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .step { text-align:center; padding:12px 4px; border-radius:12px; background:var(--bg); font-size:12px; cursor:pointer; border:1px solid var(--line); }
+  .step b { display:block; font-size:22px; margin-bottom:2px; }
+  .meters { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .meter { text-align:center; padding:10px 4px; border-radius:10px; background:var(--bg); font-size:12px; }
+  .meter .v { font-size:24px; font-weight:700; }
+  .bands { display:grid; grid-template-columns:54px 1fr 1fr; gap:5px 8px; align-items:center; font-size:12px; }
+  .bar { height:15px; background:var(--line); border-radius:4px; overflow:hidden; } .bar i { display:block; height:100%; }
+  canvas { width:100%; height:120px; display:block; }
+  .chip { display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; background:var(--bg); border:1px solid var(--line); margin-right:4px; color:var(--muted); }
+  .chip.lock { color:var(--warn); border-color:var(--warn); }
+  .list > div { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .list > div:last-child { border:0; }
+  .list .ic { font-size:24px; width:34px; text-align:center; }
+  .list .tx { flex:1; } .list .tx small { display:block; color:var(--muted); font-size:12px; }
+  .role { border-left:4px solid; padding:8px 10px; margin-bottom:8px; border-radius:6px; background:var(--bg); font-size:13px; }
+  .tiers { display:flex; gap:4px; flex-wrap:wrap; }
+  .tier { font-size:12px; padding:4px 8px; border-radius:6px; background:var(--bg); border:1px solid var(--line); }
+  .tier.me { background:var(--left); color:#fff; border-color:var(--left); }
+  .locked { opacity:.55; }
+  .sub { border:1px dashed var(--warn); } .sub h2 { color:var(--warn); }
+  .modal { position:absolute; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-end; z-index:5; }
+  .modal.on { display:flex; }
+  .sheet { background:var(--card); width:100%; border-radius:20px 20px 0 0; padding:18px; max-height:80%; overflow:auto; }
+  .tug { height:26px; background:linear-gradient(90deg,var(--left) 50%,var(--right) 50%); border-radius:13px; position:relative; margin:10px 0; }
+  .tug i { position:absolute; top:-4px; width:6px; height:34px; background:var(--ink); border-radius:3px; left:50%; transition:left .3s; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="top"><h1>🧠 브레인 사운드</h1><span class="conn"><span class="dot"></span>밴드 연결됨 (예시)</span></div>
+  <main>
+
+    <!-- 홈 -->
+    <section id="home" class="on">
+      <div class="card">
+        <h2>안녕하세요, 닉네임님</h2>
+        <p class="hint">측정으로 나를 알고 → 훈련으로 실력을 키우고 → 대회로 겨룹니다.</p>
+        <div class="grid3">
+          <div class="step" data-go="measure"><b>📈</b>1 측정<br><span class="hint">내 뇌파 보기</span></div>
+          <div class="step" data-go="train"><b>🎮</b>2 훈련<br><span class="hint">게임·직업</span></div>
+          <div class="step" data-go="league"><b>🏆</b>3 대회<br><span class="hint">티어·리그</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>내 직업</h3>
+        <div class="role" style="border-color:var(--alpha)"><b>힐러</b> 이완 · 마음이 차분할수록 강해져요</div>
+        <div class="role" style="border-color:var(--right)"><b>힘캐</b> 순간 집중 · 짧고 강하게</div>
+        <div class="role" style="border-color:var(--left)"><b>무기캐</b> 지속 집중 · 오래 흔들림 없이</div>
+        <p class="hint">측정 결과로 "너는 ○○ 타입이야"를 알려 줘요 (예시 화면).</p>
+      </div>
+      <div class="card sub">
+        <h2>🔒 마이 사운드 (구독)</h2>
+        <p class="hint">동의하면 "너한테 딱 맞는 집중 소리 후보 3개를 찾았어" 맛보기를 보여줘요. 진짜 마이 사운드·월간 테스트·뇌 변화 기록은 구독(월 9,900원)에서 열립니다.</p>
+        <button class="btn sm" data-go="sound">자세히 보기</button>
+      </div>
+    </section>
+
+    <!-- 측정 -->
+    <section id="measure">
+      <div class="card">
+        <h2>실시간 뇌파</h2>
+        <canvas id="wave"></canvas>
+        <div class="hint"><span style="color:var(--left)">━ 왼쪽 이마</span> &nbsp; <span style="color:var(--right)">━ 오른쪽 이마</span> · 예시 데이터</div>
+      </div>
+      <div class="card">
+        <h2>지수</h2>
+        <div class="meters">
+          <div class="meter">집중<div class="v" id="mF">–</div>기준 대비</div>
+          <div class="meter">이완<div class="v" id="mR">–</div>기준 대비</div>
+          <div class="meter">좌우<div class="v" id="mA">–</div>알파 기준</div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>뇌파 대역</h2>
+        <div class="bands" id="bands"><div></div><div class="hint">왼쪽</div><div class="hint">오른쪽</div></div>
+        <p class="hint">δ 0.5–4Hz · θ 4–8Hz · α 8–13Hz · β 13–30Hz</p>
+      </div>
+      <div class="card">
+        <h2>기준 측정 (눈 감고 1분)</h2>
+        <button class="btn primary" id="btnBase">기준 측정 시작</button>
+        <p class="hint" id="baseMsg">편하게 앉아 눈을 감고 60초 동안 가만히 있으면 돼요.</p>
+      </div>
+      <div class="card">
+        <h2>첫 테스트</h2>
+        <div class="list">
+          <div><span class="ic">👁️</span><span class="tx">눈 깜빡이기<small>그래프에 큰 스파이크</small></span></div>
+          <div><span class="ic">😌</span><span class="tx">눈 감기 / 뜨기<small>α알파 막대가 커졌다 작아져요</small></span></div>
+          <div><span class="ic">🧮</span><span class="tx">암산 (100에서 7씩)<small>β베타가 커지는지 보기</small></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 훈련 -->
+    <section id="train">
+      <div class="card">
+        <h2>훈련 게임</h2>
+        <p class="hint">집중(또는 이완) 수치가 오르면 화면 속에서 뭔가 좋아져요.</p>
+        <div class="list">
+          <div><span class="ic">🎈</span><span class="tx">풍선 띄우기<small>집중하면 풍선이 위로 · 기본형 · 집중</small></span><span class="chip">플레이</span></div>
+          <div><span class="ic">🏎️</span><span class="tx">자동차 경주<small>집중하면 차가 빨라져요 · 레이싱</small></span><span class="chip lock">준비 중</span></div>
+          <div><span class="ic">🧩</span><span class="tx">퍼즐 맞추기<small>그림 조각이 하나씩 맞춰져요</small></span><span class="chip lock">준비 중</span></div>
+          <div><span class="ic">🐉</span><span class="tx">드래곤 비행<small>꼼지락거리면 감점 · 판타지</small></span><span class="chip lock">준비 중</span></div>
+          <div><span class="ic">🌸</span><span class="tx">꽃 피우기<small>마음이 편해지면 꽃이 펴요 · 이완</small></span><span class="chip lock">준비 중</span></div>
+          <div><span class="ic">🕯️</span><span class="tx">촛불 끄기<small>집중하면 촛불이 꺼져요</small></span><span class="chip lock">준비 중</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>직업 퀘스트</h2>
+        <p class="hint">한 직업만 하면 약한 뇌 상태가 남아요. 다른 직업도 키워 보세요 (예: 힘캐에게 힐러 퀘스트).</p>
+      </div>
+      <div class="card">
+        <h2>🎮 학생 게임관</h2>
+        <p class="hint">수업에서 만든 게임(.sb3)을 올리면 선생님 승인 후 공개돼요. 닉네임만 표시됩니다.</p>
+        <button class="btn sm">내 게임 올리기</button>
+      </div>
+    </section>
+
+    <!-- 대회 -->
+    <section id="league">
+      <div class="card">
+        <h2>내 티어</h2>
+        <div class="tiers" id="tiers"></div>
+        <p class="hint">처음 5판 배치 경기로 시작 티어를 정해요. 직업별 티어가 따로 매겨집니다.</p>
+      </div>
+      <div class="card">
+        <h2>1:1 뇌파 줄다리기</h2>
+        <p class="hint">두 사람의 집중 수치가 줄을 당겨요. 더 집중한 쪽이 이겨요. 첫 대결 게임이에요.</p>
+        <div class="tug"><i id="tugKnob"></i></div>
+        <div class="row hint" style="display:flex;justify-content:space-between"><span style="color:var(--left)">나</span><span style="color:var(--right)">상대</span></div>
+        <button class="btn primary" id="btnTug" style="margin-top:8px">대결 시작 (예시)</button>
+      </div>
+      <div class="card">
+        <h2>리그</h2>
+        <div class="list">
+          <div><span class="ic">🏫</span><span class="tx">반 리그<small>수업에서는 여기서 시작</small></span><span class="chip">참가</span></div>
+          <div><span class="ic">🏅</span><span class="tx">학교 리그</span><span class="chip lock">준비 중</span></div>
+          <div><span class="ic">🗺️</span><span class="tx">지역 리그</span><span class="chip lock">준비 중</span></div>
+          <div><span class="ic">🇰🇷</span><span class="tx">전국 리그</span><span class="chip lock">준비 중</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 마이 사운드 -->
+    <section id="sound">
+      <div class="card sub">
+        <h2>🔒 마이 사운드</h2>
+        <p class="hint">뇌파를 재서 나에게 맞는 소리를 찾고, 공부·운동할 때 그 소리로 집중을 도와줘요.</p>
+        <div class="list">
+          <div><span class="ic">1️⃣</span><span class="tx">기준 측정<small>집중 과제로 내 최고 집중 패턴 찾기</small></span></div>
+          <div><span class="ic">2️⃣</span><span class="tx">소리 탐색<small>바이노럴비트·노이즈 등을 바꿔 가며 비교</small></span></div>
+          <div><span class="ic">3️⃣</span><span class="tx">최적 소리 저장<small>나만의 사운드 목록</small></span></div>
+          <div><span class="ic">4️⃣</span><span class="tx">실시간 유지<small>흐트러지면 소리를 자동 조정</small></span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>맛보기 (무료)</h2>
+        <p class="hint">동의하면 "너한테 맞는 소리 후보 3개를 찾았어!"까지 보여줘요.</p>
+        <button class="btn primary" id="btnSub">구독하고 모두 열기 · 월 9,900원</button>
+      </div>
+      <div class="card">
+        <h3>수업 키트에서 열리는 것</h3>
+        <span class="chip">조립</span><span class="chip">코딩</span><span class="chip">내 뇌파 보기</span>
+      </div>
+    </section>
+
+  </main>
+  <nav class="tabs">
+    <button class="on" data-go="home"><b>🏠</b>홈</button>
+    <button data-go="measure"><b>📈</b>측정</button>
+    <button data-go="train"><b>🎮</b>훈련</button>
+    <button data-go="league"><b>🏆</b>대회</button>
+    <button data-go="sound"><b>🎧</b>마이 사운드</button>
+  </nav>
+  <div class="modal" id="modal"><div class="sheet"><h2 id="mTitle"></h2><p class="hint" id="mBody"></p><button class="btn primary" onclick="document.getElementById('modal').classList.remove('on')">확인</button></div></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+function go(id) {
+  document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === id));
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.go === id));
+  $('main').scrollTop = 0;
+}
+document.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => go(el.dataset.go)));
+
+// 티어 (문서의 8단계)
+const TIERS = ['아이언','브론즈','실버','골드','플래티넘','다이아몬드','마스터','챌린저'];
+$('#tiers').innerHTML = TIERS.map((t, i) => `<span class="tier${i === 0 ? ' me' : ''}">${t}</span>`).join('');
+
+// 대역 막대 (예시 값)
+const BANDS = [['δ 델타','var(--delta)',24,22],['θ 세타','var(--theta)',20,19],['α 알파','var(--alpha)',31,33],['β 베타','var(--beta)',25,26]];
+$('#bands').insertAdjacentHTML('beforeend', BANDS.map(([n, c, l, r]) =>
+  `<div>${n}</div><div class="bar"><i style="width:${l}%;background:${c}"></i></div><div class="bar"><i style="width:${r}%;background:${c}"></i></div>`).join(''));
+
+// 예시 파형
+const cv = $('#wave'), cx = cv.getContext('2d');
+function wave(t) {
+  const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = 120;
+  if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, w, h);
+  const css = getComputedStyle(document.documentElement);
+  [['--left', 30, 0], ['--right', 90, 1.3]].forEach(([c, mid, ph]) => {
+    cx.strokeStyle = css.getPropertyValue(c); cx.lineWidth = 1.3; cx.beginPath();
+    for (let x = 0; x < w; x += 2) { const s = x / 40 + t / 400 + ph;
+      const y = mid - 9 * Math.sin(s * 3.1) - 6 * Math.sin(s * 5.7 + 1) - 3 * Math.sin(s * 11);
+      x ? cx.lineTo(x, y) : cx.moveTo(x, y); }
+    cx.stroke();
+  });
+  requestAnimationFrame(wave);
+}
+requestAnimationFrame(wave);
+
+// 기준 측정 버튼 (연출)
+let baseline = false;
+$('#btnBase').onclick = () => {
+  if ($('#btnBase').disabled) return;
+  $('#btnBase').disabled = true; let s = 5;
+  const iv = setInterval(() => {
+    $('#baseMsg').textContent = `눈을 감고 편하게… ${s}초 (목업이라 5초로 줄였어요)`;
+    if (s-- <= 0) { clearInterval(iv); baseline = true; $('#btnBase').disabled = false; $('#btnBase').textContent = '기준 다시 측정'; $('#baseMsg').textContent = '기준 저장됨 ✔ 지수가 기준 대비 %로 표시됩니다.'; }
+  }, 1000);
+};
+setInterval(() => {
+  const j = n => Math.round(n + (Math.random() - .5) * 8);
+  $('#mF').textContent = baseline ? j(108) + '%' : (1.1 + Math.random() * .2).toFixed(2);
+  $('#mR').textContent = baseline ? j(96) + '%' : j(33) + '%';
+  $('#mA').textContent = '비슷';
+}, 800);
+
+// 줄다리기 연출
+let tugT = null;
+$('#btnTug').onclick = () => {
+  if (tugT) { clearInterval(tugT); tugT = null; $('#btnTug').textContent = '대결 시작 (예시)'; return; }
+  let p = 50; $('#btnTug').textContent = '멈추기';
+  tugT = setInterval(() => { p = Math.max(5, Math.min(95, p + (Math.random() - .48) * 6)); $('#tugKnob').style.left = p + '%'; }, 300);
+};
+function modal(t, b) { $('#mTitle').textContent = t; $('#mBody').textContent = b; $('#modal').classList.add('on'); }
+$('#btnSub').onclick = () => modal('구독 안내 (목업)', '진짜 마이 사운드, 월간 테스트와 자동 업데이트, 뇌 변화 기록이 열립니다. 월 9,900원. 실제 결제 기능은 없는 화면 예시예요.');
+document.querySelectorAll('.chip.lock').forEach(c => c.parentElement.addEventListener('click', () => modal('준비 중', '아직 만들지 않은 게임이에요. 문서의 게임 리스트에 있는 것을 순서대로 추가합니다.')));
+</script>
+</body>
+</html>

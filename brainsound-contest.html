@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>브레인 사운드 컵 – 주간 뇌파 집중 대회</title>
+<style>
+  :root { --bg:#04050d; --bg2:#0a1028; --muted:#9aa4c2; --line:#1e2848; --main:#3b4fe0; --glow:#8f9bff; --ok:#4ade80; --warn:#ff8a57; --gold:#ffd86b; --pink:#ff5fa2; --cyan:#5ee7ff; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--bg); color:#fff; font-family:"Pretendard Variable","Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif; word-break:keep-all; }
+  button { font:inherit; color:inherit; cursor:pointer; }
+  a { color:inherit; text-decoration:none; }
+  .wrap { max-width:1120px; margin:0 auto; padding:0 20px; }
+  /* 상단 메뉴 */
+  nav { position:sticky; top:0; z-index:20; background:rgba(4,5,13,.82); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  nav .wrap { display:flex; align-items:center; gap:22px; height:56px; }
+  .logo { font-weight:900; letter-spacing:.16em; font-size:14px; background:linear-gradient(90deg,#fff,var(--glow)); -webkit-background-clip:text; background-clip:text; color:transparent; margin-right:auto; }
+  nav a { font-size:14px; color:var(--muted); font-weight:600; } nav a:hover { color:#fff; }
+  .pill { font-size:12px; padding:5px 12px; border-radius:999px; border:1px solid #2a3558; color:var(--muted); display:flex; gap:7px; align-items:center; }
+  .pill i { width:8px; height:8px; border-radius:50%; background:#4b5575; display:block; } .pill.on { color:#c8f7d9; border-color:rgba(74,222,128,.5); } .pill.on i { background:var(--ok); box-shadow:0 0 8px var(--ok); }
+  @media (max-width:760px) { nav a { display:none; } }
+  /* 히어로 */
+  .hero { position:relative; overflow:hidden; text-align:center; padding:74px 0 64px; background:radial-gradient(900px 420px at 50% 0,#27368f 0,rgba(4,5,13,0) 70%); }
+  #stars { position:absolute; inset:0; width:100%; height:100%; opacity:.9; }
+  .hero .wrap { position:relative; }
+  .season { display:inline-block; font-size:12.5px; letter-spacing:.3em; color:var(--cyan); border:1px solid rgba(94,231,255,.4); padding:6px 16px; border-radius:999px; margin-bottom:20px; }
+  h1 { margin:0; font-size:clamp(38px,8vw,84px); line-height:1.02; font-weight:900; letter-spacing:.04em; background:linear-gradient(180deg,#fff 20%,#9fb0ff 70%,#6a3bff); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 28px rgba(110,130,255,.55)); }
+  .hero p.lead { color:#cfd6f5; font-size:clamp(15px,2.2vw,19px); margin:18px auto 0; max-width:640px; line-height:1.7; }
+  .count { display:inline-flex; gap:12px; margin:30px 0 8px; }
+  .count div { min-width:82px; padding:12px 8px; border-radius:14px; background:rgba(255,255,255,.06); border:1px solid rgba(143,155,255,.28); }
+  .count b { display:block; font-size:32px; font-variant-numeric:tabular-nums; letter-spacing:.02em; } .count span { font-size:11.5px; color:var(--muted); }
+  .cdl { color:var(--muted); font-size:13px; }
+  .cta { margin-top:26px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .btn { border:1px solid #2a3558; background:rgba(255,255,255,.05); padding:12px 24px; border-radius:999px; font-size:15px; font-weight:700; }
+  .btn:hover { border-color:var(--glow); }
+  .btn.pri { background:linear-gradient(135deg,#4a5cff,#3b4fe0 60%,#6a3bff); border:0; box-shadow:0 8px 30px rgba(74,92,255,.55); }
+  .btn:disabled { opacity:.4; cursor:default; box-shadow:none; }
+  /* 섹션 */
+  section { padding:54px 0 6px; }
+  .eyebrow { font-size:12px; letter-spacing:.28em; color:var(--cyan); font-weight:700; }
+  h2 { font-size:clamp(24px,4vw,34px); margin:6px 0 8px; }
+  .sub { color:var(--muted); font-size:15px; line-height:1.7; margin:0 0 22px; max-width:720px; }
+  .warnbox { background:rgba(255,138,87,.1); border:1px solid rgba(255,138,87,.4); border-radius:12px; padding:11px 15px; font-size:13.5px; color:#ffd2bd; margin-bottom:16px; line-height:1.65; }
+  /* 내 성적 */
+  .me { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:-30px; position:relative; z-index:2; }
+  .me div { background:linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.025)); border:1px solid rgba(143,155,255,.25); border-radius:16px; padding:16px 18px; backdrop-filter:blur(6px); }
+  .me span { font-size:12.5px; color:var(--muted); } .me b { display:block; font-size:22px; margin-top:4px; }
+  @media (max-width:760px) { .me { grid-template-columns:1fr 1fr; } }
+  /* 종목 카드 */
+  .games { display:grid; grid-template-columns:repeat(auto-fill,minmax(205px,1fr)); gap:14px; }
+  .gc { position:relative; text-align:left; padding:18px 16px 16px; border-radius:18px; border:1px solid rgba(143,155,255,.2); background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.012)); transition:transform .15s, border-color .15s; }
+  .gc:hover { transform:translateY(-3px); border-color:var(--glow); }
+  .gc.on { border-color:var(--cyan); box-shadow:0 0 0 1px var(--cyan) inset, 0 10px 34px rgba(94,231,255,.15); }
+  .gc .ic { font-size:40px; line-height:1; filter:drop-shadow(0 4px 12px rgba(0,0,0,.5)); }
+  .gc .cat { position:absolute; top:14px; right:14px; font-size:11px; color:var(--cyan); border:1px solid rgba(94,231,255,.35); border-radius:999px; padding:2px 9px; }
+  .gc h3 { margin:12px 0 2px; font-size:17px; }
+  .gc .rec { font-size:12.5px; color:var(--muted); min-height:20px; } .gc .rec b { color:var(--gold); }
+  .dots { margin:10px 0 12px; display:flex; gap:6px; align-items:center; font-size:12px; color:var(--muted); }
+  .dots i { width:11px; height:11px; border-radius:3px; background:rgba(255,255,255,.12); display:block; } .dots i.u { background:linear-gradient(135deg,#4a5cff,#8f6bff); }
+  .gc .go { width:100%; padding:9px; border-radius:11px; border:1px solid rgba(143,155,255,.4); background:rgba(74,92,255,.18); font-weight:700; font-size:14px; }
+  .gc .go:hover:not(:disabled) { background:rgba(74,92,255,.4); } .gc .go:disabled { opacity:.45; cursor:default; }
+  /* 순위 */
+  .board { display:grid; grid-template-columns:1.05fr 1fr; gap:18px; align-items:start; }
+  @media (max-width:900px) { .board { grid-template-columns:1fr; } }
+  .panel { background:linear-gradient(145deg,rgba(255,255,255,.06),rgba(255,255,255,.015)); border:1px solid rgba(143,155,255,.18); border-radius:20px; padding:20px; }
+  .podium { display:grid; grid-template-columns:1fr 1.15fr 1fr; gap:10px; align-items:end; min-height:250px; }
+  .pd { text-align:center; }
+  .pd .nm { font-size:13.5px; font-weight:700; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .pd .sc { font-size:12.5px; color:var(--muted); margin-bottom:8px; }
+  .pd .bar { border-radius:12px 12px 0 0; display:flex; align-items:flex-start; justify-content:center; padding-top:10px; font-size:30px; }
+  .pd.r1 .bar { height:150px; background:linear-gradient(180deg,#ffd86b,#b8860b); } .pd.r2 .bar { height:110px; background:linear-gradient(180deg,#e2e8f0,#7b8798); } .pd.r3 .bar { height:84px; background:linear-gradient(180deg,#e8a874,#8a5530); }
+  .pd.mine .nm { color:var(--cyan); }
+  table { width:100%; border-collapse:collapse; font-size:14px; } td,th { text-align:left; padding:9px 8px; border-bottom:1px solid var(--line); } th { color:var(--muted); font-weight:600; font-size:12.5px; }
+  tr.mine { background:rgba(94,231,255,.13); } tr.mine td { color:#fff; font-weight:700; }
+  .empty { color:var(--muted); font-size:14px; line-height:1.7; padding:28px 10px; text-align:center; }
+  /* 참가 방법 */
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; counter-reset:s; }
+  @media (max-width:760px) { .steps { grid-template-columns:1fr; } }
+  .step { padding:20px; border-radius:18px; border:1px solid rgba(143,155,255,.2); background:rgba(255,255,255,.03); }
+  .step::before { counter-increment:s; content:counter(s); display:flex; width:34px; height:34px; border-radius:50%; align-items:center; justify-content:center; font-weight:900; background:linear-gradient(135deg,#4a5cff,#8f6bff); margin-bottom:12px; }
+  .step b { font-size:16px; } .step p { margin:6px 0 0; color:var(--muted); font-size:14px; line-height:1.65; }
+  /* 티어 */
+  .tiers { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+  @media (max-width:760px) { .tiers { grid-template-columns:1fr 1fr; } }
+  .tier { padding:16px 12px; text-align:center; border-radius:16px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03); }
+  .tier .e { font-size:30px; } .tier b { display:block; margin:6px 0 2px; } .tier span { font-size:12.5px; color:var(--muted); }
+  .tier.cur { box-shadow:0 0 0 2px var(--cyan) inset; background:rgba(94,231,255,.08); }
+  .rules { color:#cfd6f5; font-size:14.5px; line-height:1.95; padding-left:20px; margin:0; } .rules b { color:#fff; }
+  .road { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .road span { padding:10px 18px; border-radius:999px; border:1px dashed rgba(255,138,87,.5); color:#ffd2bd; font-size:14px; font-weight:600; } .road i { color:var(--muted); font-style:normal; }
+  footer { margin-top:60px; border-top:1px solid var(--line); padding:26px 0 40px; color:#6b7599; font-size:12.5px; line-height:1.8; text-align:center; }
+  #toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%); z-index:40; background:#0f1a3d; border:1px solid var(--cyan); padding:13px 22px; border-radius:14px; font-size:14px; box-shadow:0 10px 40px rgba(0,0,0,.6); max-width:90vw; }
+</style>
+</head>
+<body>
+<div id="regOv" hidden style="position:fixed;inset:0;z-index:100;background:#0b1020;display:flex;flex-direction:column"><div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:#141a30;border-bottom:1px solid #2a3355;color:#fff;font-weight:700"><span>🏫 학교·교사 등록</span><button id="regX" style="margin-left:auto;padding:8px 16px;border-radius:10px;border:1px solid #3a4470;background:#1d2547;color:#fff;font-size:15px;cursor:pointer">✕ 닫기 (Esc)</button></div><iframe id="regFr" style="flex:1;border:0;width:100%;background:#fff"></iframe></div>
+<nav><div class="wrap"><span class="logo">BRAIN SOUND</span><a href="#games">종목</a><a href="#ranking">순위</a><a href="#how">참가 방법</a><a href="#tier">티어·보상</a><a href="brainsound-register.html" target="_blank">🏫 학교·교사 등록</a><span class="pill" id="link"><i></i><span id="linkT">PC 앱 연결 안 됨</span></span></div></nav>
+
+<header class="hero">
+  <canvas id="stars"></canvas>
+  <div class="wrap">
+    <span class="season">WEEKLY BRAIN LEAGUE</span>
+    <h1>BRAIN SOUND CUP</h1>
+    <p class="lead">내 집중력으로 겨루는 주간 뇌파 대회. 게임마다 일주일에 3번, 가장 높은 점수가 순위에 올라갑니다.</p>
+    <div class="count" id="count"><div><b id="cd">0</b><span>일</span></div><div><b id="ch">00</b><span>시간</span></div><div><b id="cm">00</b><span>분</span></div><div><b id="cs">00</b><span>초</span></div></div>
+    <div class="cdl">이번 주 대회 종료까지 · <span id="week">-</span></div>
+    <div class="cta"><a class="btn pri" href="#games">🏆 지금 도전하기</a><a class="btn" href="#how">참가 방법 보기</a><a class="btn" href="brainsound-register.html" target="_blank">🏫 학교·교사 등록</a></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="me">
+    <div><span>내 티어 (임시 기준)</span><b id="tier">아직 없음</b></div>
+    <div><span>참가한 종목</span><b id="cnt">0 / 10</b></div>
+    <div><span>이번 주 최고 순위</span><b id="bestRank">-</b></div>
+    <div><span>보유 코인</span><b id="coin" style="color:var(--gold)">0</b></div>
+  </div>
+
+  <section id="games">
+    <div class="eyebrow">EVENTS</div><h2>이번 주 종목</h2>
+    <p class="sub">10가지 종목마다 따로 순위가 있어요. 카드를 누르면 아래에 순위표가 나오고, <b>도전하기</b>를 누르면 PC 앱에서 3-2-1 카운트다운 뒤에 시작해요.</p>
+    <div class="warnbox" id="offline"><b>PC 앱과 연결되지 않았어요.</b> PC 앱(brainsound-pc.html)의 <b>훈련</b> 화면에서 <b>🏆 대회 참가</b> 버튼을 눌러 이 페이지를 열면 내 기록과 도전 기능이 연결돼요.</div>
+    <div class="games" id="gl"></div>
+  </section>
+
+  <section id="ranking">
+    <div class="eyebrow">LEADERBOARD</div><h2 id="rtitle">순위표</h2>
+    <div class="warnbox">서버가 아직 없어서 <b>다른 참가자는 가상의 예시</b>예요. 내 점수는 진짜이고, 서버가 생기면 실제 참가자와 겨루게 돼요.</div>
+    <div class="board">
+      <div class="panel"><div class="podium" id="podium"></div></div>
+      <div class="panel"><div id="tbl"></div><div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn pri" id="go">🏆 이 종목 도전하기</button><span class="hint" id="gomsg" style="font-size:13px;color:var(--muted)"></span></div></div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="eyebrow">HOW TO JOIN</div><h2>참가 방법</h2>
+    <div class="steps">
+      <div class="step"><b>PC 앱 연결</b><p>PC 앱에서 아두이노를 연결하거나 데모 모드를 켜요. 설정에서 닉네임과 내 정보도 입력해 주세요.</p></div>
+      <div class="step"><b>종목 고르고 도전</b><p>이 페이지에서 종목을 고르고 도전하기를 누르면, 연습 모드 없이 정식 길이로 시작해요. 종목당 일주일에 3번 도전할 수 있어요.</p></div>
+      <div class="step"><b>순위 확인</b><p>끝나면 점수가 바로 순위표에 올라가요. 3번 중 가장 높은 점수가 내 기록이고, 월요일에 새 대회가 열려요.</p></div>
+    </div>
+  </section>
+
+  <section id="tier">
+    <div class="eyebrow">TIERS &amp; REWARDS</div><h2>티어와 보상</h2>
+    <p class="sub">참가한 종목의 최고 점수 평균으로 티어가 정해져요. (점수 기준은 임시 값이고, 실제 기기 데이터로 조정할 예정이에요)</p>
+    <div class="tiers" id="tiers"></div>
+    <ul class="rules" style="margin-top:22px">
+      <li>대회 도전도 훈련 기록과 코인이 똑같이 적립돼요. <b>(점수의 절반 + 승리 보너스 20코인)</b></li>
+      <li>대회 도전은 <b>빠르게(연습용)</b> 모드를 쓸 수 없어요. 정식 길이로만 진행돼요.</li>
+      <li>종목마다 <b>주 3번</b>, 그중 <b>최고 점수</b>가 순위에 반영돼요.</li>
+      <li>주간 1위 시상 등 상품은 <b>준비 중</b>이에요. (스폰서가 생기면 안내할게요)</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="eyebrow">COMING SOON</div><h2>앞으로 열릴 대회</h2>
+    <div class="road"><span>반 대항</span><i>→</i><span>학교 대항</span><i>→</i><span>지역 대항</span><i>→</i><span>전국 대항</span><i>→</i><span>🌏 뇌파 올림픽</span></div>
+  </section>
+</div>
+<footer><div class="wrap">브레인 사운드 · 집중 훈련과 체험을 위한 서비스이며 의료기기가 아닙니다.<br>순위의 다른 참가자와 티어 기준, 상품은 서버·운영 준비 전의 예시입니다.</div></footer>
+<div id="toast" hidden></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const FALL = [['balloon', '🎈', '풍선 띄우기', '집중'], ['car', '🏎️','자동차 경주', '집중'], ['puzzle', '🧩', '퍼즐 맞추기', '집중'], ['dragon', '🐉', '드래곤 마을 지키기', '집중'], ['candle', '🕯', '촛불 끄기', '순간 집중'], ['flower', '🌸', '꽃 피우기', '이완'], ['axe', '🪓', '도끼 던지기', '순간 집중'], ['archery', '🏹', '양궁', '지속 집중'], ['balance', '⚖', '좌우 균형', '균형'], ['tug', '🪢', '뇌파 줄다리기', '대결']].map(a => ({ id: a[0], icon: a[1], n: a[2], cat: a[3], tries: 0, best: null, field: [] }));
+let S = null, sel = 'balloon';
+const TIERS = [['🥉', '브론즈', '0 ~ 39점', 0, '#d99a6c'], ['🥈', '실버', '40 ~ 54점', 40, '#cbd5e1'], ['🥇', '골드', '55 ~ 69점', 55, '#ffd86b'], ['🔷', '플래티넘', '70 ~ 84점', 70, '#a5b4fc'], ['💎', '다이아', '85점 이상', 85, '#7dd3fc']];
+const tierIdx = a => TIERS.reduce((r, t, i) => a >= t[3] ? i : r, 0);
+const medal = i => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1;
+const games = () => S ? S.games : FALL, MAX = () => S ? S.max : 3;
+const rankOf = g => g.best === null || !g.field.length ? null : 1 + g.field.filter(x => x.pts > g.best).length;
+
+function render() {
+  const G = games(); if (!G.some(g => g.id === sel)) sel = G[0].id;
+  if (S) { $('week').textContent = S.week; $('coin').textContent = S.coins; }
+  const done = G.filter(g => g.best !== null), avg = done.length ? done.reduce((a, g) => a + g.best, 0) / done.length : null, ti = avg === null ? -1 : tierIdx(avg);
+  $('tier').textContent = ti < 0 ? '아직 없음' : TIERS[ti][0] + ' ' + TIERS[ti][1]; $('tier').style.color = ti < 0 ? '#9aa4c2' : TIERS[ti][4];
+  $('cnt').textContent = `${done.length} / ${G.length}`;
+  const rks = done.map(rankOf).filter(x => x !== null); $('bestRank').textContent = rks.length ? Math.min(...rks) + '위' : '-';
+  $('tiers').innerHTML = TIERS.map((t, i) => `<div class="tier${i === ti ? ' cur' : ''}"><div class="e">${t[0]}</div><b style="color:${t[4]}">${t[1]}</b><span>${t[2]}</span></div>`).join('');
+  $('gl').innerHTML = G.map(g => { const r = rankOf(g), left = MAX() - g.tries;
+    return `<div class="gc${g.id === sel ? ' on' : ''}" data-id="${g.id}"><span class="cat">${esc(g.cat || '')}</span><div class="ic">${g.icon}</div><h3>${esc(g.n)}</h3>
+      <div class="rec">${g.best === null ? '아직 도전 전' : `최고 <b>${g.best}점</b>${r ? ` · <b>${r}위</b>` : ''}`}</div>
+      <div class="dots">${Array.from({ length: MAX() }, (_, i) => `<i class="${i < g.tries ? 'u' : ''}"></i>`).join('')}<span>${left}번 남음</span></div>
+      <button class="go" data-go="${g.id}" ${left <= 0 || !S ? 'disabled' : ''}>${left <= 0 ? '이번 주 끝' : '🏆 도전하기'}</button></div>`; }).join('');
+  document.querySelectorAll('.gc').forEach(c => c.onclick = e => { if (e.target.closest('.go')) return; sel = c.dataset.id; render(); });
+  document.querySelectorAll('.go').forEach(b => b.onclick = () => start(b.dataset.go));
+  const g = G.find(x => x.id === sel);
+  $('rtitle').textContent = `${g.icon} ${g.n} 순위표`;
+  if (!g.field.length) { $('podium').innerHTML = '<div class="empty" style="grid-column:1/4">PC 앱과 연결하면<br>시상대와 순위가 여기에 나와요.</div>'; $('tbl').innerHTML = ''; }
+  else {
+    const nick = S.nick + ' (나)', rows = g.field.map(x => ({ n: x.n, pts: x.pts, me: false })); if (g.best !== null) rows.push({ n: nick, pts: g.best, me: true });
+    rows.sort((a, b) => b.pts - a.pts || (a.me ? -1 : 1));
+    const pod = [1, 0, 2].map(i => { const r = rows[i]; return `<div class="pd r${i + 1}${r.me ? ' mine' : ''}"><div class="nm">${esc(r.n)}</div><div class="sc">${r.pts}점</div><div class="bar">${medal(i)}</div></div>`; }).join('');
+    $('podium').innerHTML = pod;
+    const myIdx = rows.findIndex(r => r.me), show = rows.map((r, i) => ({ ...r, i })).filter(r => r.i >= 3 && r.i < 10 || r.me && r.i >= 3);
+    $('tbl').innerHTML = '<table><tr><th style="width:56px">순위</th><th>닉네임</th><th style="width:70px">점수</th></tr>' + show.map(r => `<tr${r.me ? ' class="mine"' : ''}><td>${r.i + 1}</td><td>${esc(r.n)}</td><td>${r.pts}</td></tr>`).join('') + '</table>'
+      + `<p style="margin:10px 0 0;font-size:13.5px;color:var(--muted)">${g.best === null ? '아직 도전하지 않았어요. 도전하면 내 점수가 이 표에 올라가요.' : `총 ${rows.length}명 중 <b style="color:var(--gold)">${myIdx + 1}위</b>`}</p>`;
+  }
+  const lf = MAX() - g.tries; $('go').disabled = lf <= 0 || !S; $('go').textContent = lf <= 0 ? '이번 주 기회를 다 썼어요' : `🏆 ${g.n} 도전하기 (남은 ${lf}번)`;
+}
+let tt; function toast(m) { const t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 4500); }
+function start(id) { if (!opener || opener.closed) { toast('PC 앱 창이 닫혀 있어요. PC 앱의 훈련 화면에서 🏆 대회 참가를 눌러 다시 열어 주세요.'); return; } $('gomsg').textContent = ''; opener.postMessage({ type: 'bs-contest-start', game: id }, '*'); }
+$('go').onclick = () => start(sel);
+addEventListener('message', e => { const m = e.data || {};
+  if (m.type === 'bs-contest-state') { S = m; if (m.sel && !window.__selSet) { sel = m.sel; window.__selSet = 1; } $('offline').hidden = true; $('link').classList.add('on'); $('linkT').textContent = 'PC 앱 연결됨'; render(); }
+  if (m.type === 'bs-contest-ack') { toast(m.msg); $('gomsg').textContent = m.msg; } });
+if (opener) { try { opener.postMessage({ type: 'bs-contest-hello' }, '*'); } catch {} }
+render();
+// 카운트다운: 다음 월요일 0시까지
+function tick() { const n = new Date(), add = (8 - n.getDay()) % 7 || 7, end = new Date(n.getFullYear(), n.getMonth(), n.getDate() + add), d = Math.max(0, end - n), p = x => String(x).padStart(2, '0');
+  $('cd').textContent = Math.floor(d / 864e5); $('ch').textContent = p(Math.floor(d / 36e5) % 24); $('cm').textContent = p(Math.floor(d / 6e4) % 60); $('cs').textContent = p(Math.floor(d / 1e3) % 60);
+  if (!S) { const st = new Date(n.getFullYear(), n.getMonth(), n.getDate() - (n.getDay() + 6) % 7), en = new Date(st.getFullYear(), st.getMonth(), st.getDate() + 6); $('week').textContent = `${st.getMonth() + 1}/${st.getDate()}(월) ~ ${en.getMonth() + 1}/${en.getDate()}(일)`; } }
+tick(); setInterval(tick, 1000);
+// 별 배경
+(function () { const c = $('stars'), x = c.getContext('2d'); let w, h, st = [];
+  function size() { w = c.width = c.clientWidth; h = c.height = c.clientHeight; st = Array.from({ length: 90 }, () => ({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.6 + .3, s: Math.random() * .35 + .05, p: Math.random() * 6 })); }
+  size(); addEventListener('resize', size);
+  (function f(t) { x.clearRect(0, 0, w, h); for (const s of st) { s.y += s.s; if (s.y > h) { s.y = 0; s.x = Math.random() * w; } x.globalAlpha = .35 + .5 * Math.abs(Math.sin(t / 900 + s.p)); x.fillStyle = s.r > 1.3 ? '#9fe9ff' : '#fff'; x.fillRect(s.x, s.y, s.r, s.r); } requestAnimationFrame(f); })(0); })();
+// 학교·교사 등록: 대회 페이지 안에서 겹쳐서 열기
+function openReg() { const fr = document.getElementById('regFr'); if (!fr.dataset.on) { fr.srcdoc = REG_HTML; fr.dataset.on = '1'; } document.getElementById('regOv').hidden = false; document.body.style.overflow = 'hidden'; }
+function closeReg() { document.getElementById('regOv').hidden = true; document.body.style.overflow = ''; }
+document.querySelectorAll('a[href="brainsound-register.html"]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); openReg(); }));
+document.getElementById('regX').onclick = closeReg;
+addEventListener('keydown', e => { if (e.key === 'Escape') closeReg(); });
+/*REG_BEGIN*/const REG_HTML = "<!doctype html>\n<html lang=\"ko\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>브레인 사운드 등록 – 학교·교사·반·학생<\/title>\n<style>\n  :root { --bg:#04050d; --muted:#9aa4c2; --line:#1e2848; --main:#3b4fe0; --glow:#8f9bff; --ok:#4ade80; --warn:#ff8a57; --gold:#ffd86b; --cyan:#5ee7ff; --bad:#ff6b6b; }\n  * { box-sizing:border-box; }\n  [hidden] { display:none !important; }\n  body { margin:0; background:radial-gradient(1100px 460px at 50% -10%,#1a2470 0,#04050d 62%) no-repeat, var(--bg); color:#fff; font-family:\"Pretendard Variable\",\"Pretendard\",\"Malgun Gothic\",\"Apple SD Gothic Neo\",system-ui,sans-serif; word-break:keep-all; min-height:100vh; }\n  button,input,select { font:inherit; color:inherit; }\n  button { cursor:pointer; }\n  .wrap { max-width:980px; margin:0 auto; padding:24px 20px 70px; }\n  .logo { font-weight:900; letter-spacing:.16em; font-size:14px; background:linear-gradient(90deg,#fff,var(--glow)); -webkit-background-clip:text; background-clip:text; color:transparent; }\n  h1 { font-size:clamp(26px,5vw,38px); margin:8px 0 6px; } h2 { font-size:19px; margin:0 0 4px; } h3 { font-size:15px; margin:0 0 8px; }\n  .sub { color:var(--muted); font-size:14.5px; line-height:1.7; margin:0 0 18px; }\n  .hint { font-size:13px; color:var(--muted); line-height:1.65; }\n  .warnbox { background:rgba(255,138,87,.1); border:1px solid rgba(255,138,87,.4); border-radius:12px; padding:11px 15px; font-size:13.5px; color:#ffd2bd; margin-bottom:16px; line-height:1.65; }\n  .steps { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:6px 0 18px; }\n  @media (max-width:760px) { .steps { grid-template-columns:1fr 1fr; } }\n  .st { text-align:left; padding:13px 14px; border-radius:14px; border:1px solid rgba(143,155,255,.2); background:rgba(255,255,255,.03); }\n  .st:hover { border-color:var(--glow); }\n  .st.on { border-color:var(--cyan); background:rgba(94,231,255,.08); box-shadow:0 0 0 1px var(--cyan) inset; }\n  .st i { font-style:normal; display:inline-flex; width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,#4a5cff,#8f6bff); align-items:center; justify-content:center; font-size:12.5px; font-weight:800; margin-right:8px; }\n  .st b { font-size:14.5px; } .st span { display:block; font-size:12px; color:var(--muted); margin-top:4px; }\n  .card { background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015)); border:1px solid rgba(143,155,255,.2); border-radius:20px; padding:22px; margin-bottom:16px; }\n  .form { display:grid; grid-template-columns:1fr 1fr; gap:14px 16px; }\n  @media (max-width:700px) { .form { grid-template-columns:1fr; } }\n  .full { grid-column:1/-1; }\n  label.f { display:grid; gap:6px; font-size:13.5px; font-weight:700; }\n  label.f small { font-weight:400; color:var(--muted); font-size:12px; }\n  input[type=text],input[type=email],input[type=number],select { padding:12px 14px; border-radius:12px; border:1px solid #2a3558; background:#070a1c; width:100%; font-size:15px; }\n  input:focus,select:focus { outline:2px solid var(--cyan); outline-offset:0; border-color:transparent; }\n  .chk { display:flex; gap:10px; align-items:flex-start; font-size:13.5px; line-height:1.6; color:#cfd6f5; } .chk input { margin-top:4px; width:17px; height:17px; flex:none; }\n  .btn { border:1px solid #2a3558; background:rgba(255,255,255,.05); padding:11px 22px; border-radius:999px; font-size:14.5px; font-weight:700; }\n  .btn:hover { border-color:var(--glow); }\n  .btn.pri { background:linear-gradient(135deg,#4a5cff,#3b4fe0 60%,#6a3bff); border:0; box-shadow:0 8px 26px rgba(74,92,255,.5); }\n  .btn.sm { padding:6px 13px; font-size:12.5px; }\n  .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }\n  .msg { font-size:13.5px; line-height:1.6; } .msg.bad { color:var(--bad); } .msg.ok { color:var(--ok); }\n  .codebox { margin-top:14px; padding:16px 18px; border-radius:14px; background:rgba(94,231,255,.08); border:1px dashed var(--cyan); }\n  .codebox .code { font-size:30px; font-weight:900; letter-spacing:.14em; color:var(--cyan); font-variant-numeric:tabular-nums; }\n  table { width:100%; border-collapse:collapse; font-size:14px; } td,th { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:middle; } th { color:var(--muted); font-weight:600; font-size:12.5px; }\n  .tag { display:inline-block; font-size:12px; padding:3px 10px; border-radius:999px; border:1px solid #2a3556; color:var(--muted); }\n  .tag.ok { color:#c8f7d9; border-color:rgba(74,222,128,.5); } .tag.wait { color:#ffd2bd; border-color:rgba(255,138,87,.5); }\n  .mono { font-family:Consolas,monospace; letter-spacing:.08em; color:var(--cyan); font-weight:700; }\n  .empty { color:var(--muted); font-size:14px; padding:18px 6px; text-align:center; }\n  footer { margin-top:30px; font-size:12.5px; color:#6b7599; line-height:1.8; }\n<\/style>\n<\/head>\n<body>\n<div class=\"wrap\">\n  <span class=\"logo\">BRAIN SOUND<\/span>\n  <h1>학교 · 교사 · 반 · 학생 등록<\/h1>\n  <p class=\"sub\">대회, 교사 운영 화면, 학교 대항전의 출발점이에요. 순서대로 <b>학교 → 교사 → 반 → 학생<\/b>을 등록합니다.<\/p>\n  <div class=\"warnbox\"><b>시험용 화면이에요.<\/b> 서버가 아직 없어서 입력한 내용은 <b>이 컴퓨터의 이 브라우저에만<\/b> 저장돼요(다른 기기와 공유되지 않아요). 교사 승인도 지금은 시험용 버튼으로만 할 수 있어요. 비밀번호·로그인은 서버가 생기면 붙여요.<\/div>\n\n  <div class=\"steps\" id=\"steps\">\n    <button class=\"st on\" data-t=\"school\"><i>1<\/i><b>학교 등록<\/b><span id=\"s1\">0곳<\/span><\/button>\n    <button class=\"st\" data-t=\"teacher\"><i>2<\/i><b>교사 등록<\/b><span id=\"s2\">0명<\/span><\/button>\n    <button class=\"st\" data-t=\"class\"><i>3<\/i><b>반 만들기<\/b><span id=\"s3\">0개<\/span><\/button>\n    <button class=\"st\" data-t=\"student\"><i>4<\/i><b>학생 입장<\/b><span id=\"s4\">0명<\/span><\/button>\n  <\/div>\n\n  <!-- 1. 학교 -->\n  <section id=\"p-school\">\n    <div class=\"card\">\n      <h2>1. 학교 등록<\/h2><p class=\"hint\" style=\"margin:0 0 16px\">학교를 등록하면 <b>학교 코드<\/b>가 만들어져요. 선생님과 학생이 이 코드로 소속을 정해요. 같은 이름의 학교가 여러 곳 있어서 지역도 함께 입력해요.<\/p>\n      <div class=\"form\">\n        <label class=\"f full\">학교 이름<input type=\"text\" id=\"scName\" placeholder=\"예: 햇살초등학교\" maxlength=\"30\"><\/label>\n        <label class=\"f\">시·도<select id=\"scSido\"><\/select><\/label>\n        <label class=\"f\">시·군·구<input type=\"text\" id=\"scGu\" placeholder=\"예: 강남구\" maxlength=\"20\"><\/label>\n        <label class=\"f\">학교급<select id=\"scLv\"><option>초등학교<\/option><option>중학교<\/option><option>고등학교<\/option><option>기타<\/option><\/select><\/label>\n      <\/div>\n      <div class=\"row\" style=\"margin-top:18px\"><button class=\"btn pri\" id=\"scGo\">학교 등록하기<\/button><span class=\"msg\" id=\"scMsg\"><\/span><\/div>\n      <div id=\"scCode\" class=\"codebox\" hidden><div class=\"hint\">학교 코드 (선생님께 알려 주세요)<\/div><div class=\"code\" id=\"scCodeV\"><\/div><\/div>\n    <\/div>\n    <div class=\"card\"><h3>등록된 학교<\/h3><div id=\"scList\"><\/div><\/div>\n  <\/section>\n\n  <!-- 2. 교사 -->\n  <section id=\"p-teacher\" hidden>\n    <div class=\"card\">\n      <h2>2. 담당 교사 등록<\/h2><p class=\"hint\" style=\"margin:0 0 16px\">학교를 고르거나 학교 코드를 입력해 담당 신청을 해요. 학생 기록을 볼 수 있으므로 <b>승인된 교사만<\/b> 반을 만들 수 있어요.<\/p>\n      <div class=\"form\">\n        <label class=\"f\">교사 이름<input type=\"text\" id=\"tcName\" maxlength=\"20\" placeholder=\"예: 김선생\"><\/label>\n        <label class=\"f\">이메일<input type=\"email\" id=\"tcMail\" maxlength=\"60\" placeholder=\"예: teacher@school.kr\"><\/label>\n        <label class=\"f\">학교 선택<select id=\"tcSchool\"><\/select><\/label>\n        <label class=\"f\">또는 학교 코드 입력<small>선택 대신 코드를 직접 넣을 수 있어요<\/small><input type=\"text\" id=\"tcCode\" placeholder=\"SCH-XXXXXX\" maxlength=\"10\" style=\"text-transform:uppercase\"><\/label>\n        <label class=\"f\">담당 분야<select id=\"tcRole\"><option>과학<\/option><option>정보·코딩<\/option><option>영재반<\/option><option>방과후<\/option><option>담임<\/option><option>기타<\/option><\/select><\/label>\n        <div class=\"full\"><label class=\"chk\"><input type=\"checkbox\" id=\"tcAgree\"><span>교사 정보(이름·이메일)를 담당 확인과 안내 목적으로 수집하는 것에 동의해요. 학생 뇌파 기록은 <b>내 학교·반 학생만<\/b> 볼 수 있고, 외부에 공개하지 않아요.<\/span><\/label><\/div>\n      <\/div>\n      <div class=\"row\" style=\"margin-top:18px\"><button class=\"btn pri\" id=\"tcGo\">담당 신청하기<\/button><span class=\"msg\" id=\"tcMsg\"><\/span><\/div>\n    <\/div>\n    <div class=\"card\"><h3>등록된 교사<\/h3><div id=\"tcList\"><\/div><\/div>\n  <\/section>\n\n  <!-- 3. 반 -->\n  <section id=\"p-class\" hidden>\n    <div class=\"card\">\n      <h2>3. 반 만들기<\/h2><p class=\"hint\" style=\"margin:0 0 16px\">승인된 교사가 반을 만들면 <b>반 코드<\/b>가 만들어져요. 학생이 이 코드로 반에 들어와요.<\/p>\n      <div class=\"form\">\n        <label class=\"f\">담당 교사 (승인된 교사만)<select id=\"clTeacher\"><\/select><\/label>\n        <label class=\"f\">반 이름<input type=\"text\" id=\"clName\" maxlength=\"20\" placeholder=\"예: 3학년 2반 / 영재반 A\"><\/label>\n        <label class=\"f\">학년도<input type=\"number\" id=\"clYear\" min=\"2024\" max=\"2040\"><\/label>\n        <label class=\"f\">예상 인원<input type=\"number\" id=\"clN\" min=\"1\" max=\"60\" placeholder=\"예: 25\"><\/label>\n      <\/div>\n      <div class=\"row\" style=\"margin-top:18px\"><button class=\"btn pri\" id=\"clGo\">반 만들기<\/button><span class=\"msg\" id=\"clMsg\"><\/span><\/div>\n      <div id=\"clCode\" class=\"codebox\" hidden><div class=\"hint\">반 코드 (학생에게 알려 주세요)<\/div><div class=\"code\" id=\"clCodeV\"><\/div><\/div>\n    <\/div>\n    <div class=\"card\"><h3>만든 반<\/h3><div id=\"clList\"><\/div><\/div>\n  <\/section>\n\n  <!-- 4. 학생 -->\n  <section id=\"p-student\" hidden>\n    <div class=\"card\">\n      <h2>4. 학생 반 입장<\/h2><p class=\"hint\" style=\"margin:0 0 16px\">학생이 선생님께 받은 <b>반 코드<\/b>로 들어와요. 이름은 받지 않고 <b>닉네임<\/b>만 써요. 14세 미만은 보호자 동의가 필요해요.<\/p>\n      <div class=\"form\">\n        <label class=\"f\">닉네임<input type=\"text\" id=\"stNick\" maxlength=\"12\" placeholder=\"예: 번개손\"><\/label>\n        <label class=\"f\">나이(만)<input type=\"number\" id=\"stAge\" min=\"6\" max=\"19\" placeholder=\"예: 11\"><\/label>\n        <label class=\"f full\">반 코드<input type=\"text\" id=\"stCode\" placeholder=\"CLS-XXXXXX\" maxlength=\"10\" style=\"text-transform:uppercase\"><\/label>\n        <div class=\"full\" id=\"stGuardBox\" hidden><label class=\"chk\"><input type=\"checkbox\" id=\"stGuard\"><span><b>보호자 동의<\/b> — 만 14세 미만이에요. 보호자가 닉네임·훈련 기록이 담당 교사에게 보이는 것에 동의했어요.<\/span><\/label><\/div>\n      <\/div>\n      <div class=\"row\" style=\"margin-top:18px\"><button class=\"btn pri\" id=\"stGo\">반에 들어가기<\/button><span class=\"msg\" id=\"stMsg\"><\/span><\/div>\n    <\/div>\n    <div class=\"card\"><h3>반별 학생<\/h3><div id=\"stList\"><\/div><\/div>\n  <\/section>\n\n  <footer>브레인 사운드 · 집중 훈련과 체험을 위한 서비스이며 의료기기가 아닙니다. 학생의 이름·연락처는 받지 않습니다.<\/footer>\n<\/div>\n\n<script>\nconst $ = id => document.getElementById(id);\nconst esc = t => String(t).replace(/[&<>\"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));\nconst KEY = 'bs_reg_demo'; let mem = null;\nconst load = () => { try { const x = localStorage.getItem(KEY); if (x) return JSON.parse(x); } catch {} return mem || { schools: [], teachers: [], classes: [], students: [] }; };\nlet D = load(); const save = () => { mem = D; try { localStorage.setItem(KEY, JSON.stringify(D)); } catch {} };\nconst ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';\nconst mk = pre => { let s; do { s = pre + '-' + Array.from({ length: 6 }, () => ALPHA[Math.floor(Math.random() * ALPHA.length)]).join(''); } while ([...D.schools, ...D.classes].some(x => x.code === s)); return s; };\nconst norm = t => t.trim().replace(/\\s+/g, '');\n['서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'].forEach(s => $('scSido').add(new Option(s, s)));\n$('clYear').value = new Date().getFullYear();\nconst say = (id, t, k) => { const e = $(id); e.textContent = t; e.className = 'msg ' + (k || ''); };\nconst sName = id => (D.schools.find(s => s.id === id) || {}).name || '?';\n\ndocument.querySelectorAll('.st').forEach(b => b.onclick = () => { document.querySelectorAll('.st').forEach(x => x.classList.toggle('on', x === b)); ['school', 'teacher', 'class', 'student'].forEach(t => $('p-' + t).hidden = t !== b.dataset.t); });\nfunction go(t) { document.querySelector(`.st[data-t=${t}]`).click(); }\n\nfunction render() {\n  $('s1').textContent = D.schools.length + '곳'; $('s2').textContent = D.teachers.length + '명'; $('s3').textContent = D.classes.length + '개'; $('s4').textContent = D.students.length + '명';\n  $('scList').innerHTML = D.schools.length ? '<table><tr><th>학교<\/th><th>지역<\/th><th>학교 코드<\/th><\/tr>' + D.schools.map(s => `<tr><td><b>${esc(s.name)}<\/b> <span class=\"tag\">${esc(s.lv)}<\/span><\/td><td>${esc(s.sido)} ${esc(s.gu)}<\/td><td class=\"mono\">${s.code}<\/td><\/tr>`).join('') + '<\/table>' : '<div class=\"empty\">아직 등록된 학교가 없어요. 위에서 학교를 먼저 등록해 주세요.<\/div>';\n  $('tcSchool').innerHTML = '<option value=\"\">학교를 고르세요<\/option>' + D.schools.map(s => `<option value=\"${s.id}\">${esc(s.name)} (${esc(s.sido)} ${esc(s.gu)})<\/option>`).join('');\n  $('tcList').innerHTML = D.teachers.length ? '<table><tr><th>교사<\/th><th>학교<\/th><th>분야<\/th><th>상태<\/th><\/tr>' + D.teachers.map(t => `<tr><td><b>${esc(t.name)}<\/b><br><span class=\"hint\">${esc(t.mail)}<\/span><\/td><td>${esc(sName(t.school))}<\/td><td>${esc(t.role)}<\/td><td>${t.ok ? '<span class=\"tag ok\">승인됨<\/span>' : '<span class=\"tag wait\">승인 대기<\/span> <button class=\"btn sm\" data-ap=\"' + t.id + '\">승인(시험용)<\/button>'}<\/td><\/tr>`).join('') + '<\/table>' : '<div class=\"empty\">아직 등록된 교사가 없어요.<\/div>';\n  document.querySelectorAll('[data-ap]').forEach(b => b.onclick = () => { D.teachers.find(t => t.id === b.dataset.ap).ok = true; save(); render(); });\n  const okT = D.teachers.filter(t => t.ok);\n  $('clTeacher').innerHTML = okT.length ? okT.map(t => `<option value=\"${t.id}\">${esc(t.name)} · ${esc(sName(t.school))}<\/option>`).join('') : '<option value=\"\">승인된 교사가 없어요<\/option>';\n  $('clList').innerHTML = D.classes.length ? '<table><tr><th>반<\/th><th>학교 · 담당<\/th><th>반 코드<\/th><th>학생<\/th><\/tr>' + D.classes.map(c => { const t = D.teachers.find(x => x.id === c.teacher) || {}; return `<tr><td><b>${esc(c.name)}<\/b><br><span class=\"hint\">${c.year}학년도${c.n ? ' · 예상 ' + c.n + '명' : ''}<\/span><\/td><td>${esc(sName(t.school))}<br><span class=\"hint\">${esc(t.name || '')}<\/span><\/td><td class=\"mono\">${c.code}<\/td><td>${D.students.filter(s => s.cls === c.id).length}명<\/td><\/tr>`; }).join('') + '<\/table>' : '<div class=\"empty\">아직 만든 반이 없어요.<\/div>';\n  $('stList').innerHTML = D.classes.length ? D.classes.map(c => { const ss = D.students.filter(s => s.cls === c.id); return `<h3 style=\"margin-top:12px\">${esc(c.name)} <span class=\"mono\" style=\"font-size:12.5px\">${c.code}<\/span> · ${ss.length}명<\/h3>` + (ss.length ? ss.map(s => `<span class=\"tag\" style=\"margin:2px 4px 2px 0\">${esc(s.nick)} (${s.age}세)${s.guard ? ' · 보호자 동의' : ''}<\/span>`).join('') : '<div class=\"hint\">아직 들어온 학생이 없어요.<\/div>'); }).join('') : '<div class=\"empty\">반이 만들어지면 여기에 학생이 보여요.<\/div>';\n}\n\n$('scGo').onclick = () => { const name = $('scName').value.trim(), sido = $('scSido').value, gu = $('scGu').value.trim(), lv = $('scLv').value;\n  if (name.length < 2) return say('scMsg', '학교 이름을 입력해 주세요.', 'bad'); if (!gu) return say('scMsg', '시·군·구를 입력해 주세요.', 'bad');\n  const dup = D.schools.find(s => norm(s.name) === norm(name) && s.sido === sido && norm(s.gu) === norm(gu));\n  if (dup) { $('scCode').hidden = false; $('scCodeV').textContent = dup.code; return say('scMsg', '이미 등록된 학교예요. 아래 코드로 교사 등록을 이어가 주세요.', 'bad'); }\n  const s = { id: 's' + Date.now(), name, sido, gu, lv, code: mk('SCH') }; D.schools.push(s); save(); render(); $('scCode').hidden = false; $('scCodeV').textContent = s.code; say('scMsg', '학교가 등록됐어요 ✔', 'ok'); $('scName').value = ''; };\n\n$('tcGo').onclick = () => { const name = $('tcName').value.trim(), mail = $('tcMail').value.trim(), code = $('tcCode').value.trim().toUpperCase(); let sc = D.schools.find(s => s.id === $('tcSchool').value);\n  if (code) { sc = D.schools.find(s => s.code === code); if (!sc) return say('tcMsg', '이 학교 코드를 찾을 수 없어요. 코드를 다시 확인해 주세요.', 'bad'); }\n  if (!name) return say('tcMsg', '교사 이름을 입력해 주세요.', 'bad'); if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(mail)) return say('tcMsg', '이메일을 올바르게 입력해 주세요.', 'bad');\n  if (!sc) return say('tcMsg', '학교를 고르거나 학교 코드를 입력해 주세요.', 'bad'); if (!$('tcAgree').checked) return say('tcMsg', '동의에 체크해 주세요.', 'bad');\n  if (D.teachers.some(t => t.mail.toLowerCase() === mail.toLowerCase() && t.school === sc.id)) return say('tcMsg', '이 학교에 이미 신청된 이메일이에요.', 'bad');\n  D.teachers.push({ id: 't' + Date.now(), name, mail, school: sc.id, role: $('tcRole').value, ok: false }); save(); render(); say('tcMsg', `${sc.name} 담당 신청이 접수됐어요. 승인 대기 중이에요.`, 'ok'); $('tcName').value = $('tcMail').value = $('tcCode').value = ''; $('tcAgree').checked = false; };\n\n$('clGo').onclick = () => { const t = D.teachers.find(x => x.id === $('clTeacher').value), name = $('clName').value.trim();\n  if (!t) return say('clMsg', '승인된 교사가 있어야 반을 만들 수 있어요. 2단계에서 교사를 승인해 주세요.', 'bad'); if (!name) return say('clMsg', '반 이름을 입력해 주세요.', 'bad');\n  if (D.classes.some(c => c.teacher === t.id && norm(c.name) === norm(name) && c.year === +$('clYear').value)) return say('clMsg', '같은 이름의 반이 이미 있어요.', 'bad');\n  const c = { id: 'c' + Date.now(), teacher: t.id, name, year: +$('clYear').value, n: +$('clN').value || 0, code: mk('CLS') }; D.classes.push(c); save(); render(); $('clCode').hidden = false; $('clCodeV').textContent = c.code; say('clMsg', '반이 만들어졌어요 ✔', 'ok'); $('clName').value = ''; };\n\n$('stAge').oninput = () => { $('stGuardBox').hidden = !($('stAge').value && +$('stAge').value < 14); };\n$('stGo').onclick = () => { const nick = $('stNick').value.trim(), age = +$('stAge').value, code = $('stCode').value.trim().toUpperCase(), c = D.classes.find(x => x.code === code);\n  if (nick.length < 2) return say('stMsg', '닉네임을 2자 이상 입력해 주세요.', 'bad'); if (!age || age < 6 || age > 19) return say('stMsg', '나이를 입력해 주세요.', 'bad');\n  if (!c) return say('stMsg', '이 반 코드를 찾을 수 없어요. 선생님께 받은 코드를 다시 확인해 주세요.', 'bad');\n  if (age < 14 && !$('stGuard').checked) return say('stMsg', '만 14세 미만은 보호자 동의가 필요해요.', 'bad');\n  if (D.students.some(s => s.cls === c.id && s.nick === nick)) return say('stMsg', '이 반에 같은 닉네임이 이미 있어요. 다른 닉네임을 써 주세요.', 'bad');\n  D.students.push({ id: 'u' + Date.now(), nick, age, cls: c.id, guard: age < 14 }); save(); render(); say('stMsg', `${c.name}에 들어왔어요 🎉`, 'ok'); $('stNick').value = ''; };\nrender();\n<\/script>\n<\/body>\n<\/html>\n";/*REG_END*/
+// 상단 메뉴·버튼의 #이동을 직접 처리 (어떤 환경에서도 스크롤되게)
+document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+  const t = document.getElementById(a.getAttribute('href').slice(1)); if (!t) return; e.preventDefault();
+  const nv = document.querySelector('nav'); document.documentElement.style.scrollBehavior = 'auto';
+  scrollTo(0, t.getBoundingClientRect().top + scrollY - (nv ? nv.offsetHeight : 0) - 8);
+}));
+</script>
+</body>
+</html>

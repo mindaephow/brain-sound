@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>브레인 사운드 - 마이 사운드 찾기</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1d2330; --muted:#6b7280; --line:#e3e6eb; --main:#2f6fdf; --ok:#1f9d55; --warn:#c2410c; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#12151b; --card:#1b2029; --ink:#e8ebf0; --muted:#9aa3b2; --line:#2c3340; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif; }
+  header { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 16px; background:var(--card); border-bottom:1px solid var(--line); }
+  header h1 { font-size:18px; margin:0 12px 0 0; }
+  button { font:inherit; font-size:14px; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; }
+  button.primary { background:var(--main); border-color:var(--main); color:#fff; }
+  button.on { background:var(--ok); border-color:var(--ok); color:#fff; }
+  button:disabled { opacity:.45; cursor:default; }
+  #status { font-size:13px; color:var(--muted); margin-left:auto; }
+  .wrap { max-width:860px; margin:14px auto; padding:0 16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:12px; }
+  h2 { font-size:15px; margin:0 0 8px; }
+  .hint { font-size:13px; color:var(--muted); line-height:1.7; margin:6px 0; }
+  .big { font-size:46px; font-weight:700; text-align:center; margin:10px 0; letter-spacing:1px; }
+  .stage { text-align:center; font-size:15px; font-weight:600; min-height:22px; }
+  .prog { height:10px; background:var(--line); border-radius:6px; overflow:hidden; margin:8px 0; }
+  .prog i { display:block; height:100%; width:0; background:var(--main); transition:width .5s linear; }
+  .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; font-size:14px; }
+  .res { display:grid; grid-template-columns:150px 1fr 70px; gap:6px 10px; align-items:center; font-size:14px; }
+  .bar { height:20px; background:var(--line); border-radius:4px; overflow:hidden; }
+  .bar i { display:block; height:100%; background:var(--main); }
+  .best .bar i { background:var(--ok); }
+  .warn { color:var(--warn); font-weight:600; }
+  canvas { width:100%; height:70px; display:block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎧 마이 사운드 찾기</h1>
+  <button id="btnConnect" class="primary">아두이노 연결</button>
+  <button id="btnDemo">데모 (기기 없이 연습)</button>
+  <label class="row"><input type="checkbox" id="fast"> 빠르게(연습용, 구간 10초)</label>
+  <span id="status">연결 안 됨</span>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2>어떻게 하나요</h2>
+    <p class="hint">
+      <b>① 기준 측정</b> 소리 없이 암산을 하며 이 사람이 가장 집중할 때의 뇌파(최고 집중 패턴)를 찾습니다 (60초).<br>
+      <b>② 소리 탐색</b> 같은 암산을 하면서 소리를 바꿔 가며 들려주고, 뇌파가 기준에 얼마나 가까워지고 오래 유지되는지 봅니다 (소리마다 60초).<br>
+      <b>③ 결과 저장</b> 가장 잘 맞는 소리 3개를 이 사람의 마이 사운드로 저장합니다.<br>
+      <span class="warn">이어폰(헤드폰)을 꼭 끼세요.</span> 바이노럴비트는 왼쪽·오른쪽 귀에 다른 소리가 들어가야 작동합니다. 소리는 작게 시작하세요.
+    </p>
+    <div class="row">
+      <label>볼륨 <input type="range" id="vol" min="0" max="100" value="25"></label>
+      <button id="btnStart" disabled>검사 시작</button>
+      <button id="btnStop" disabled>중단</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stage" id="stage">연결하면 시작할 수 있어요</div>
+    <div class="big" id="task">–</div>
+    <div class="prog"><i id="prog"></i></div>
+    <div class="row">현재 집중 지수 <b id="fNow">–</b> <span id="fRel" class="hint"></span></div>
+    <canvas id="trend"></canvas>
+  </div>
+
+  <div class="card" id="resultCard" hidden>
+    <h2>결과: 이 사람에게 맞는 소리 순위</h2>
+    <div class="res" id="results"></div>
+    <p class="hint" id="resultNote"></p>
+    <div class="row"><button id="btnPlayBest">1위 소리 들어보기</button><button id="btnSave" class="primary">마이 사운드로 저장</button><span id="saveMsg" class="hint"></span></div>
+  </div>
+
+  <div class="card">
+    <h2>저장된 마이 사운드</h2>
+    <div id="saved" class="hint">아직 없음</div>
+  </div>
+</div>
+
+<script>
+const FS = 256, FFT_N = 512, BUF = FS * 4;
+const $ = id => document.getElementById(id);
+const bufL = new Float32Array(BUF), bufR = new Float32Array(BUF);
+let widx = 0, total = 0, source = null, port = null, reader = null;
+function pushSample(l, r) { bufL[widx] = l; bufR[widx] = r; widx = (widx + 1) % BUF; total++; }
+function lastN(b, n) { const o = new Float32Array(n); for (let i = 0; i < n; i++) o[i] = b[(widx - n + i + BUF) % BUF]; return o; }
+
+// ---------- 연결 ----------
+$('btnConnect').onclick = async () => {
+  if (!('serial' in navigator)) { alert('크롬(Chrome)이나 엣지(Edge)로 열어 주세요.'); return; }
+  if (port) { await disconnect(); return; }
+  try { port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); }
+  catch (e) { port = null; $('status').textContent = '연결 취소됨'; return; }
+  stopDemo(); source = 'serial'; $('btnConnect').textContent = '연결 끊기'; ready(); readLoop();
+};
+async function readLoop() {
+  const dec = new TextDecoderStream(); const closed = port.readable.pipeTo(dec.writable).catch(() => {});
+  reader = dec.readable.getReader(); let pend = '';
+  try { while (true) { const { value, done } = await reader.read(); if (done) break;
+    pend += value; const lines = pend.split('\n'); pend = lines.pop();
+    for (const ln of lines) { const p = ln.trim().split(','); if (p.length < 2) continue;
+      const l = parseFloat(p[0]), r = parseFloat(p[1]); if (Number.isFinite(l) && Number.isFinite(r)) pushSample(l, r); } } }
+  catch (e) { $('status').textContent = '연결이 끊겼어요'; }
+  await closed;
+}
+async function disconnect() {
+  try { if (reader) await reader.cancel(); } catch {} try { await port.close(); } catch {}
+  port = null; reader = null; source = null; abortRun(); $('btnConnect').textContent = '아두이노 연결'; $('btnStart').disabled = true;
+}
+
+// ---------- 데모: 가짜 뇌파 (숨겨진 '잘 맞는 소리'가 있음) ----------
+let demoTimer = null, demoT = 0, pinkL = 0, pinkR = 0, curSound = 'none';
+const DEMO_FAVORITE = 'beta18'; // 연습용: 이 소리일 때 집중이 더 잘 나옴
+$('btnDemo').onclick = () => {
+  if (demoTimer) { stopDemo(); source = null; abortRun(); $('btnStart').disabled = true; $('status').textContent = '데모 종료'; return; }
+  if (port) disconnect();
+  source = 'demo'; $('btnDemo').classList.add('on'); ready();
+  let last = performance.now(), carry = 0;
+  demoTimer = setInterval(() => {
+    const now = performance.now(); carry += (now - last) / 1000 * FS; last = now;
+    const n = Math.floor(carry); carry -= n;
+    const boost = runStage === 'explore' && curSound === DEMO_FAVORITE ? 1 : runStage === 'explore' && curSound === 'alpha10' ? -.3 : 0;
+    const task = runStage === 'baseline' || runStage === 'explore';
+    for (let i = 0; i < n; i++) {
+      const t = demoT++ / FS, bAmp = (task ? 8 : 3) + boost * 4 + 2 * Math.sin(t / 5), aAmp = task ? 7 : 14;
+      const s = aAmp * Math.sin(2 * Math.PI * 10 * t) + bAmp * (Math.sin(2 * Math.PI * 19 * t) + Math.sin(2 * Math.PI * 24 * t));
+      pinkL = .97 * pinkL + (Math.random() - .5) * 6; pinkR = .97 * pinkR + (Math.random() - .5) * 6;
+      pushSample(pinkL + s + (Math.random() - .5) * 3, pinkR + s + (Math.random() - .5) * 3);
+    }
+  }, 20);
+};
+function stopDemo() { if (!demoTimer) return; clearInterval(demoTimer); demoTimer = null; $('btnDemo').classList.remove('on'); }
+function ready() { widx = 0; total = 0; bufL.fill(0); bufR.fill(0); $('btnStart').disabled = false; $('stage').textContent = '준비됐어요. "검사 시작"을 누르세요'; }
+
+// ---------- 집중 지수 (뷰어와 같은 방식) ----------
+const hann = new Float32Array(FFT_N).map((_, i) => 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (FFT_N - 1)));
+function fftPower(sig) {
+  const n = FFT_N, re = new Float32Array(n), im = new Float32Array(n);
+  let m = 0; for (let i = 0; i < n; i++) m += sig[i]; m /= n;
+  for (let i = 0; i < n; i++) re[i] = (sig[i] - m) * hann[i];
+  for (let i = 1, j = 0; i < n; i++) { let bit = n >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } }
+  for (let len = 2; len <= n; len <<= 1) { const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) { let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++) { const a = i + k, b = a + len / 2;
+        const tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        const nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr; } } }
+  const p = new Float32Array(n / 2); for (let k = 0; k < n / 2; k++) p[k] = re[k] * re[k] + im[k] * im[k]; return p;
+}
+function band(p, lo, hi) { const res = FS / FFT_N; let s = 0; for (let k = Math.ceil(lo / res); k < hi / res; k++) s += p[k]; return s; }
+function focusNow() {
+  if (total < FFT_N) return null;
+  const pl = fftPower(lastN(bufL, FFT_N)), pr = fftPower(lastN(bufR, FFT_N));
+  const t = band(pl, 4, 8) + band(pr, 4, 8), a = band(pl, 8, 13) + band(pr, 8, 13), b = band(pl, 13, 30) + band(pr, 13, 30);
+  return b / ((a + t) || 1);
+}
+// 0.5초마다 기록. 눈 깜빡임 같은 튀는 값은 중앙값 필터로 완화
+let samples = [], recent = [];
+setInterval(() => {
+  const f = source ? focusNow() : null; if (f == null) return;
+  recent.push(f); if (recent.length > 5) recent.shift();
+  const s = [...recent].sort((x, y) => x - y)[Math.floor(recent.length / 2)];
+  $('fNow').textContent = s.toFixed(2);
+  if (runStage) { samples.push({ t: performance.now(), f: s }); drawTrend(); }
+}, 500);
+
+// ---------- 소리 만들기 (Web Audio) ----------
+const SOUNDS = [
+  { id: 'none',    name: '무음(대조군)' },
+  { id: 'white',   name: '화이트노이즈' },
+  { id: 'pink',    name: '핑크노이즈' },
+  { id: 'brown',   name: '브라운노이즈' },
+  { id: 'theta6',  name: '바이노럴 세타 6Hz' },
+  { id: 'alpha10', name: '바이노럴 알파 10Hz' },
+  { id: 'beta18',  name: '바이노럴 베타 18Hz' },
+];
+let actx = null, master = null, nodes = [];
+function ensureAudio() {
+  if (!actx) { actx = new (window.AudioContext || window.webkitAudioContext)(); master = actx.createGain(); master.connect(actx.destination); }
+  if (actx.state === 'suspended') actx.resume();
+  master.gain.value = (+$('vol').value / 100) ** 2 * 0.5;
+}
+$('vol').oninput = () => { if (master) master.gain.value = (+$('vol').value / 100) ** 2 * 0.5; };
+function noiseBuffer(kind) {
+  const len = actx.sampleRate * 4, buf = actx.createBuffer(2, len, actx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); let b0 = 0, b1 = 0, b2 = 0, last = 0;
+    for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1;
+      if (kind === 'white') d[i] = w * 0.5;
+      else if (kind === 'pink') { b0 = .99765 * b0 + w * .0990460; b1 = .96300 * b1 + w * .2965164; b2 = .57000 * b2 + w * 1.0526913; d[i] = (b0 + b1 + b2 + w * .1848) * 0.12; }
+      else { last = (last + .02 * w) / 1.02; d[i] = last * 3.2; } } }
+  return buf;
+}
+function playSound(id) {
+  stopSound(); curSound = id; if (id === 'none') return; ensureAudio();
+  if (['white', 'pink', 'brown'].includes(id)) {
+    const src = actx.createBufferSource(); src.buffer = noiseBuffer(id); src.loop = true; src.connect(master); src.start(); nodes.push(src);
+  } else {
+    const beat = { theta6: 6, alpha10: 10, beta18: 18 }[id], carrier = 200;
+    const merger = actx.createChannelMerger(2);
+    [carrier - beat / 2, carrier + beat / 2].forEach((f, ch) => { const o = actx.createOscillator(); o.frequency.value = f; const g = actx.createGain(); g.gain.value = .5; o.connect(g); g.connect(merger, 0, ch); o.start(); nodes.push(o); });
+    merger.connect(master); nodes.push(merger);
+  }
+}
+function stopSound() { nodes.forEach(n => { try { n.stop && n.stop(); n.disconnect(); } catch {} }); nodes = []; curSound = 'none'; }
+function chime() { try { ensureAudio(); const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = 880; g.gain.value = .15; o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + .3); } catch {} }
+
+// ---------- 검사 진행 ----------
+let runStage = null, runTimers = [], plan = [], idx = 0, segStart = 0, segSec = 60, taskTimer = null, peak = null, results = [], lastRanking = null;
+function shuffle(a) { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
+$('btnStart').onclick = () => {
+  if (runStage) return; ensureAudio();
+  segSec = $('fast').checked ? 10 : 60;
+  samples = []; results = []; peak = null; $('resultCard').hidden = true;
+  const middle = shuffle(SOUNDS.filter(s => s.id !== 'none'));
+  plan = [{ stage: 'baseline', sound: 'none', label: '① 기준 측정: 소리 없이 암산' }];
+  plan.push({ stage: 'explore', sound: 'none', label: '② 대조: 무음 상태 암산' });
+  middle.forEach((s, i) => plan.push({ stage: 'explore', sound: s.id, label: `② 소리 ${i + 1}/${middle.length}: 암산하며 듣기` }));
+  plan.push({ stage: 'explore', sound: 'none', label: '② 대조: 무음 상태 암산 (마무리)' });
+  idx = 0; $('btnStart').disabled = true; $('btnStop').disabled = false; runSegment();
+};
+$('btnStop').onclick = () => { abortRun(); $('stage').textContent = '중단했어요'; };
+function abortRun() { runStage = null; runTimers.forEach(clearTimeout); runTimers = []; clearInterval(taskTimer); stopSound(); $('btnStop').disabled = true; if (source) $('btnStart').disabled = false; $('prog').style.width = '0'; $('task').textContent = '–'; }
+function runSegment() {
+  const seg = plan[idx]; runStage = seg.stage; segStart = performance.now(); seg.startIdx = samples.length;
+  playSound(seg.sound); $('stage').textContent = seg.label; chime();
+  // 암산 문제: 100에서 7씩 빼기를 반복
+  let n = 100 + (Math.random() * 40 | 0), step = [3, 6, 7, 8, 9][Math.random() * 5 | 0];
+  $('task').textContent = `${n} − ${step}`;
+  clearInterval(taskTimer);
+  taskTimer = setInterval(() => { n -= step; if (n < 20) n = 100 + (Math.random() * 40 | 0); $('task').textContent = `${n} − ${step}`; }, 5000);
+  const iv = setInterval(() => { const e = (performance.now() - segStart) / 1000; $('prog').style.width = Math.min(100, 100 * e / segSec) + '%'; }, 500);
+  runTimers.push(setTimeout(() => { clearInterval(iv); endSegment(); }, segSec * 1000));
+}
+function endSegment() {
+  const seg = plan[idx]; seg.endIdx = samples.length;
+  const settle = Math.round(Math.min(10, segSec / 4) * 2); // 앞 몇 초는 적응 시간이라 제외 (0.5초 단위)
+  seg.f = samples.slice(seg.startIdx + settle, seg.endIdx).map(x => x.f);
+  idx++;
+  if (idx >= plan.length) { finish(); return; }
+  runSegment();
+}
+function pct(a, p) { const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; }
+function mean(a) { return a.reduce((s, x) => s + x, 0) / (a.length || 1); }
+function std(a) { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); }
+function finish() {
+  runStage = null; clearInterval(taskTimer); stopSound(); $('btnStop').disabled = true; $('btnStart').disabled = false; $('prog').style.width = '100%'; chime();
+  // 기준 = 기준 측정 구간 상위 20% 값 (이 사람의 '최고 집중 패턴')
+  peak = pct(plan[0].f, 0.8);
+  const rows = SOUNDS.map(s => {
+    const segs = plan.filter((p, i) => i > 0 && p.sound === s.id);
+    const f = segs.flatMap(p => p.f);
+    const close = mean(f) / peak;                                     // 평균이 기준에 얼마나 가까운가
+    const hold = f.filter(x => x >= 0.85 * peak).length / (f.length || 1); // 기준의 85% 이상을 유지한 시간 비율
+    const steady = 1 - Math.min(1, std(f) / (mean(f) || 1));          // 흔들림이 적을수록 1
+    return { id: s.id, name: s.name, close, hold, score: 100 * (0.5 * Math.min(close, 1.3) / 1.3 + 0.35 * hold + 0.15 * steady) };
+  });
+  const ctrl = rows.find(r => r.id === 'none');
+  const sounds = rows.filter(r => r.id !== 'none').sort((a, b) => b.score - a.score);
+  lastRanking = { ctrl, sounds, peak, date: new Date().toISOString() };
+  showResults();
+  $('stage').textContent = '검사 끝! 아래 결과를 확인하세요';
+}
+function showResults() {
+  const { ctrl, sounds } = lastRanking, max = Math.max(...sounds.map(s => s.score), ctrl.score, 1);
+  const g = $('results'); g.innerHTML = '';
+  const addRow = (r, cls, rank) => {
+    const a = document.createElement('div'); a.textContent = (rank ? rank + '위 ' : '') + r.name;
+    const b = document.createElement('div'); b.className = 'bar'; const i = document.createElement('i'); i.style.width = (100 * r.score / max) + '%'; b.appendChild(i);
+    const c = document.createElement('div'); c.textContent = r.score.toFixed(0) + '점';
+    [a, b, c].forEach(el => { if (cls) el.classList.add(cls); g.appendChild(el); });
+  };
+  sounds.forEach((r, i) => { const row = document.createElement('div'); row.style.display = 'contents'; addRow(r, i < 3 ? 'best' : '', i + 1); });
+  addRow(ctrl, '', 0);
+  const better = sounds.filter(s => s.score > ctrl.score + 5).length;
+  $('resultNote').innerHTML = `점수 = 기준 측정(최고 집중 패턴)에 가까운 정도 + 기준의 85% 이상 유지한 시간 + 안정감. 맨 아래가 <b>무음 상태</b>의 점수라서, 이보다 확실히 높은 소리만 의미가 있습니다 (지금은 ${better}개). 한 번의 검사는 흔들릴 수 있으니 다른 날 다시 해서 같은 소리가 또 높으면 믿을 수 있습니다.`;
+  $('resultCard').hidden = false;
+}
+$('btnPlayBest').onclick = () => { if (!lastRanking) return; if (nodes.length) { stopSound(); $('btnPlayBest').textContent = '1위 소리 들어보기'; return; } playSound(lastRanking.sounds[0].id); $('btnPlayBest').textContent = '멈추기'; };
+$('btnSave').onclick = () => {
+  if (!lastRanking) return;
+  const top = lastRanking.sounds.slice(0, 3).map(s => ({ id: s.id, name: s.name, score: Math.round(s.score) }));
+  try { localStorage.setItem('brainSoundMySound', JSON.stringify({ top, date: lastRanking.date, peak: lastRanking.peak })); $('saveMsg').textContent = '저장했어요 ✔'; }
+  catch { $('saveMsg').textContent = '저장하지 못했어요 (브라우저 설정 확인)'; }
+  showSaved();
+};
+function showSaved() {
+  try { const s = JSON.parse(localStorage.getItem('brainSoundMySound')); if (!s) return;
+    $('saved').innerHTML = s.top.map((t, i) => `${i + 1}. <b>${t.name}</b> (${t.score}점)`).join('<br>') + `<br><span class="hint">${new Date(s.date).toLocaleString('ko-KR')} 검사</span>`; } catch {}
+}
+showSaved();
+
+// ---------- 추이 그래프 ----------
+const cv = $('trend'), cx = cv.getContext('2d');
+function drawTrend() {
+  const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = 70;
+  if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, w, h);
+  const d = samples.slice(-240).map(x => x.f); if (d.length < 2) return;
+  const mx = Math.max(...d, peak || 0, 1), css = getComputedStyle(document.documentElement);
+  cx.strokeStyle = css.getPropertyValue('--main'); cx.lineWidth = 1.5; cx.beginPath();
+  d.forEach((v, i) => { const x = w * i / 239, y = h - 4 - (h - 8) * v / mx; i ? cx.lineTo(x, y) : cx.moveTo(x, y); }); cx.stroke();
+}
+setInterval(() => { $('status').textContent = source ? (source === 'demo' ? '데모 모드' : '아두이노 연결됨') + (runStage ? ' · 검사 중' : '') : '연결 안 됨'; }, 500);
+</script>
+</body>
+</html>
