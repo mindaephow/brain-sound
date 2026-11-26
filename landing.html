@@ -347,8 +347,8 @@
   <p class="sub">PC, 안드로이드, 아이폰에서 같은 계정으로 사용합니다.</p>
   <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
     <div class="card hl"><div class="n">PC</div><h3>PC 버전</h3><p>큰 화면으로 실시간 뇌파를 보고, 수업과 훈련에 사용합니다.</p><div class="tags"><span class="tag">Windows</span><span class="tag">크롬 · 엣지</span></div><div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" id="appInstall" style="cursor:pointer;border:0">⬇ 앱 설치</button><a class="btn ghost sm" href="brainsound-pc.html">바로 사용하기</a></div><p id="appHelp" role="status" style="margin:10px 0 0;font-size:13px" hidden></p></div>
-    <div class="card hl"><div class="n">ANDROID</div><h3>안드로이드</h3><p>유선과 무선 버전 모두 연결해 사용할 수 있습니다.</p><div class="tags"><span class="tag">Google Play</span></div><div style="margin-top:16px"><a class="btn ghost sm" href="#contact">출시 알림 받기</a> <span class="tag">준비 중</span></div></div>
-    <div class="card hl"><div class="n">IPHONE</div><h3>아이폰</h3><p>블루투스로 연결하는 무선 버전과 함께 사용합니다.</p><div class="tags"><span class="tag">App Store</span></div><div style="margin-top:16px"><a class="btn ghost sm" href="#contact">출시 알림 받기</a> <span class="tag">준비 중</span></div></div>
+    <div class="card hl"><div class="n">ANDROID</div><h3>안드로이드</h3><p>크롬에서 설치해 훈련과 대회를 이용합니다. 유선 기기는 USB로 연결합니다(시험 중). 무선 연결은 준비 중입니다.</p><div class="tags"><span class="tag">크롬에서 설치</span></div><div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" id="appInstallA" style="cursor:pointer;border:0">⬇ 앱 설치</button><a class="btn ghost sm" href="brainsound-pc.html">바로 사용하기</a></div><p id="appHelpA" role="status" style="margin:10px 0 0;font-size:13px" hidden></p></div>
+    <div class="card hl"><div class="n">IPHONE</div><h3>아이폰</h3><p>Safari의 공유 버튼에서 "홈 화면에 추가"를 누르면 앱처럼 열립니다. 지금은 데모 체험과 기록 보기만 되고, 기기 연결은 무선 버전과 함께 준비 중입니다.</p><div class="tags"><span class="tag">홈 화면에 추가</span></div><div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap"><a class="btn ghost sm" href="brainsound-pc.html">바로 사용하기</a><a class="btn ghost sm" href="#contact">무선 출시 알림</a></div></div>
   </div>
 </div></section>
 
@@ -636,15 +636,16 @@ document.getElementById('f').addEventListener('submit', async e => {
 // PC 앱 설치
 (function () {
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(() => {});
-  const btn = document.getElementById('appInstall'), help = document.getElementById('appHelp'); let ask = null;
-  const say = t => { help.textContent = t; help.hidden = false; };
+  let ask = null; const ua = navigator.userAgent, android = /Android/.test(ua);
+  const pairs = [['appInstall', 'appHelp', false], ['appInstallA', 'appHelpA', true]].map(([b, h, phone]) => ({ btn: document.getElementById(b), help: document.getElementById(h), phone }));
+  const say = (p, t) => { p.help.textContent = t; p.help.hidden = false; };
   addEventListener('beforeinstallprompt', e => { e.preventDefault(); ask = e; });
-  addEventListener('appinstalled', () => { ask = null; say('설치됐어요 ✔ 바탕화면이나 시작 메뉴의 "브레인 사운드"를 누르면 열려요.'); });
-  btn.onclick = async () => {
-    if (ask) { const p = ask; ask = null; p.prompt(); const r = await p.userChoice; if (r.outcome !== 'accepted') say('설치를 취소했어요. 새로고침하면 다시 설치할 수 있어요.'); return; }
-    if (!/Chrome|Edg/.test(navigator.userAgent) || /Android|iPhone|iPad/.test(navigator.userAgent)) say('PC의 크롬이나 엣지에서 설치할 수 있어요.');
-    else say('주소창 오른쪽의 설치 아이콘을 누르거나, 브라우저 메뉴에서 "앱 설치"를 골라 주세요. 이미 설치했다면 바탕화면이나 시작 메뉴에서 열 수 있어요.');
-  };
+  addEventListener('appinstalled', () => { ask = null; pairs.filter(p => p.phone === android).forEach(p => say(p, '설치됐어요 ✔ 바탕화면(홈 화면)의 "브레인 사운드"를 누르면 열려요.')); });
+  pairs.forEach(p => p.btn.onclick = async () => {
+    if (p.phone !== android || /iPhone|iPad/.test(ua)) return say(p, p.phone ? '안드로이드 폰의 크롬에서 이 페이지를 열고 눌러 주세요.' : 'PC의 크롬이나 엣지에서 설치할 수 있어요.');
+    if (ask) { const q = ask; ask = null; q.prompt(); const r = await q.userChoice; if (r.outcome !== 'accepted') say(p, '설치를 취소했어요. 새로고침하면 다시 설치할 수 있어요.'); return; }
+    say(p, p.phone ? '크롬 메뉴(⋮)에서 "앱 설치" 또는 "홈 화면에 추가"를 골라 주세요. 이미 설치했다면 홈 화면에서 열 수 있어요.' : '주소창 오른쪽의 설치 아이콘을 누르거나, 브라우저 메뉴에서 "앱 설치"를 골라 주세요. 이미 설치했다면 바탕화면이나 시작 메뉴에서 열 수 있어요.');
+  });
 })();
 </script>
 </body>
