@@ -165,7 +165,7 @@
 <script>
 const $ = id => document.getElementById(id);
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const FALL = [['balloon', '🎈', '풍선 띄우기', '집중'], ['car', '🏎️','자동차 경주', '집중'], ['puzzle', '🧩', '퍼즐 맞추기', '집중'], ['dragon', '🐉', '드래곤 마을 지키기', '집중'], ['candle', '🕯', '촛불 끄기', '순간 집중'], ['flower', '🌸', '꽃 피우기', '이완'], ['axe', '🪓', '도끼 던지기', '순간 집중'], ['archery', '🏹', '양궁', '지속 집중'], ['balance', '⚖', '좌우 균형', '균형'], ['tug', '🪢', '뇌파 줄다리기', '대결']].map(a => ({ id: a[0], icon: a[1], n: a[2], cat: a[3], tries: 0, best: null, field: [] }));
+const FALL = [['balloon', '🎈', '풍선 띄우기', '집중'], ['car', '🏎️','자동차 경주', '집중'], ['puzzle', '🧩', '퍼즐 맞추기', '집중'], ['dragon', '🐉', '드래곤 마을 지키기', '집중'], ['candle', '🕯', '촛불 끄기', '순간 집중'], ['flower', '🌸', '꽃 피우기', '이완'], ['axe', '🪓', '도끼 던지기', '순간 집중'], ['archery', '🏹', '양궁', '지속 집중'], ['balance', '⚖', '좌우 균형', '균형'], ['tug', '💪', '뇌파 줄다리기', '대결']].map(a => ({ id: a[0], icon: a[1], n: a[2], cat: a[3], tries: 0, best: null, field: [] }));
 let S = null, sel = 'balloon';
 const TIERS = [['🥉', '브론즈', '0 ~ 39점', 0, '#d99a6c'], ['🥈', '실버', '40 ~ 54점', 40, '#cbd5e1'], ['🥇', '골드', '55 ~ 69점', 55, '#ffd86b'], ['🔷', '플래티넘', '70 ~ 84점', 70, '#a5b4fc'], ['💎', '다이아', '85점 이상', 85, '#7dd3fc']];
 const tierIdx = a => TIERS.reduce((r, t, i) => a >= t[3] ? i : r, 0);
