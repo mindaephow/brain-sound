@@ -198,7 +198,10 @@
   .ddm a em { font-style:normal; margin-left:8px; font-size:11px; font-weight:600; color:#8f9bff; border:1px solid rgba(143,155,255,.4); border-radius:999px; padding:1px 8px; }
   @media (max-width:760px) { .dd { display:none; } }
 </style>
-<style>[id^="tr-"]{scroll-margin-top:90px}</style><style>.card .do{margin:0 0 8px !important}.card .do b{display:inline-block;margin-right:8px;font-size:11.5px;letter-spacing:.06em;color:#8f9bff;border:1px solid rgba(143,155,255,.35);border-radius:999px;padding:0 9px}.card .do + .do{color:#e8ecff}</style><style>.gl{margin-top:12px}.gl b{display:inline-block;font-size:11.5px;letter-spacing:.06em;color:#8f9bff;border:1px solid rgba(143,155,255,.35);border-radius:999px;padding:0 9px}.gl .tags{margin-top:8px}</style></head>
+<style>[id^="tr-"]{scroll-margin-top:90px}</style><style>.card .do{margin:0 0 8px !important}.card .do b{display:inline-block;margin-right:8px;font-size:11.5px;letter-spacing:.06em;color:#8f9bff;border:1px solid rgba(143,155,255,.35);border-radius:999px;padding:0 9px}.card .do + .do{color:#e8ecff}</style><style>.gl{margin-top:12px}.gl b{display:inline-block;font-size:11.5px;letter-spacing:.06em;color:#8f9bff;border:1px solid rgba(143,155,255,.35);border-radius:999px;padding:0 9px}.gl .tags{margin-top:8px}</style><link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#04050d">
+<link rel="icon" href="icons/app-192.png">
+</head>
 <body><div class="progress" id="progress"></div>
 <nav><div class="w"><b><a href="landing.html" aria-label="브레인 사운드 첫 화면" style="color:inherit;font-size:inherit" onclick="window.scrollTo({top:0,behavior:'smooth'});return false">BRAIN SOUND</a></b><a href="#program">이용 방법</a><a href="#features">기능</a><div class="dd"><a href="#training" class="ddt">훈련 ▾</a><div class="ddm" style="min-width:640px">
   <div class="ddc"><div class="ddh"><i style="background:#3b4fe0"></i>집중력 훈련</div><a href="#tr-nf">입문 훈련</a><a href="#tr-power">순간 집중력 훈련</a><a href="#tr-focus">지속 집중력 훈련</a></div>
@@ -343,7 +346,7 @@
   <h2>어디서나, 나의 집중을 확인하세요</h2>
   <p class="sub">PC, 안드로이드, 아이폰에서 같은 계정으로 사용합니다.</p>
   <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
-    <div class="card hl"><div class="n">PC</div><h3>PC 버전</h3><p>큰 화면으로 실시간 뇌파를 보고, 수업과 훈련에 사용합니다.</p><div class="tags"><span class="tag">Windows</span></div><div style="margin-top:16px"><a class="btn ghost sm" href="#contact">출시 알림 받기</a> <span class="tag">준비 중</span></div></div>
+    <div class="card hl"><div class="n">PC</div><h3>PC 버전</h3><p>큰 화면으로 실시간 뇌파를 보고, 수업과 훈련에 사용합니다.</p><div class="tags"><span class="tag">Windows</span><span class="tag">크롬 · 엣지</span></div><div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" id="appInstall" style="cursor:pointer;border:0">⬇ 앱 설치</button><a class="btn ghost sm" href="brainsound-pc.html">바로 사용하기</a></div><p id="appHelp" role="status" style="margin:10px 0 0;font-size:13px" hidden></p></div>
     <div class="card hl"><div class="n">ANDROID</div><h3>안드로이드</h3><p>유선과 무선 버전 모두 연결해 사용할 수 있습니다.</p><div class="tags"><span class="tag">Google Play</span></div><div style="margin-top:16px"><a class="btn ghost sm" href="#contact">출시 알림 받기</a> <span class="tag">준비 중</span></div></div>
     <div class="card hl"><div class="n">IPHONE</div><h3>아이폰</h3><p>블루투스로 연결하는 무선 버전과 함께 사용합니다.</p><div class="tags"><span class="tag">App Store</span></div><div style="margin-top:16px"><a class="btn ghost sm" href="#contact">출시 알림 받기</a> <span class="tag">준비 중</span></div></div>
   </div>
@@ -622,6 +625,21 @@ if (FORM_URL) document.getElementById('setup').style.display = 'none';
     if(!still)requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+})();
+</script>
+<script>
+// PC 앱 설치
+(function () {
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(() => {});
+  const btn = document.getElementById('appInstall'), help = document.getElementById('appHelp'); let ask = null;
+  const say = t => { help.textContent = t; help.hidden = false; };
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); ask = e; });
+  addEventListener('appinstalled', () => { ask = null; say('설치됐어요 ✔ 바탕화면이나 시작 메뉴의 "브레인 사운드"를 누르면 열려요.'); });
+  btn.onclick = async () => {
+    if (ask) { const p = ask; ask = null; p.prompt(); const r = await p.userChoice; if (r.outcome !== 'accepted') say('설치를 취소했어요. 새로고침하면 다시 설치할 수 있어요.'); return; }
+    if (!/Chrome|Edg/.test(navigator.userAgent) || /Android|iPhone|iPad/.test(navigator.userAgent)) say('PC의 크롬이나 엣지에서 설치할 수 있어요.');
+    else say('주소창 오른쪽의 설치 아이콘을 누르거나, 브라우저 메뉴에서 "앱 설치"를 골라 주세요. 이미 설치했다면 바탕화면이나 시작 메뉴에서 열 수 있어요.');
+  };
 })();
 </script>
 </body>

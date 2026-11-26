@@ -80,6 +80,9 @@
   table { width:100%; border-collapse:collapse; font-size:14px; } td,th { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); } th { color:var(--muted); font-weight:600; }
   @media (max-width:760px) { body { grid-template-columns:1fr; } aside { grid-row:auto; flex-direction:row; overflow-x:auto; padding:8px; } .logo,.side-foot { display:none; } }
 </style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#04050d">
+<link rel="icon" href="icons/app-192.png">
 </head>
 <body>
 <aside>
@@ -1084,5 +1087,6 @@ loadProfile(); updatePfWarn();
 setSit(sit);
 bsMember(); bsSync().then(() => bsMember()); addEventListener('storage', e => { if (e.key === 'bs_student') bsMember(); }); addEventListener('focus', () => bsSync().then(() => bsMember()));
 </script>
+<script>if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(() => {});</script>
 </body>
 </html>
